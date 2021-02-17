@@ -3,7 +3,7 @@
 #include "wiPlatform.h"
 
 #ifdef _WIN32
-#define WICKEDENGINE_BUILD_DX12
+//#define WICKEDENGINE_BUILD_DX12
 #endif // _WIN32
 
 #ifdef WICKEDENGINE_BUILD_DX12
