@@ -268,7 +268,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)wiAllocators.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiArchive.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiAudio.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wiAudio_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiBlueNoise.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiContainers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiECS.h" />
@@ -280,52 +279,15 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)wiGraphicsDevice_SharedInternals.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiGraphicsDevice_Vulkan.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiInput.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wiInput_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiIntersect.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)LoadingScreen.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LoadingScreen_BindLua.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lapi.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lauxlib.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lcode.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lctype.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\ldebug.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\ldo.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lfunc.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lgc.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\llex.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\llimits.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lmem.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lobject.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lopcodes.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lparser.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lprefix.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lstate.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lstring.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\ltable.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\ltm.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lua.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lua.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\luaconf.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lualib.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lundump.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lvm.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)LUA\lzio.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MainComponent.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)MainComponent_BindLua.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Matrix_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)RenderPath2D.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)RenderPath2D_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)RenderPath3D.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)RenderPath3D_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)RenderPath.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)RenderPath_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ResourceMapping.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SamplerMapping.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)SpriteAnim_BindLua.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Texture_BindLua.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Vector_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiBackLog.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wiBackLog_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)WickedEngine.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiColor.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiEmittedParticle.h" />
@@ -333,7 +295,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)wiFadeManager.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiFont.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiSDLInput.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wiSpriteFont_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiGraphics.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiGraphicsDevice_DX11.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiGraphicsDevice.h" />
@@ -341,9 +302,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)wiHairParticle.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiHelper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiImage.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wiImageParams_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiInitializer.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wiIntersect_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiJobSystem.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiNetwork.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiPhysicsEngine.h" />
@@ -351,7 +310,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)wiLua_Globals.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiLuna.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiMath.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wiNetwork_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiOcean.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiPlatform.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiProfiler.h" />
@@ -359,15 +317,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)wiRawInput.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiRectPacker.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiRenderer.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wiRenderer_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiResourceManager.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiScene.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wiScene_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiScene_Decl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiSpinLock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiSprite.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiSpriteFont.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wiSprite_BindLua.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiStartupArguments.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiTextureHelper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wiTimer.h" />
@@ -541,7 +496,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Utility\utility_common.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiArchive.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiAudio.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiAudio_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiBlueNoise.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiEvent.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiFFTGenerator.cpp" />
@@ -551,160 +505,39 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)wiGraphicsDevice_DX12.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiGraphicsDevice_Vulkan.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)LoadingScreen.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)LoadingScreen_BindLua.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lapi.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lauxlib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lbaselib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lbitlib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lcode.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lcorolib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lctype.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\ldblib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\ldebug.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\ldo.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\ldump.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lfunc.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lgc.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\linit.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\liolib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\llex.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lmathlib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lmem.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\loadlib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lobject.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lopcodes.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\loslib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lparser.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lstate.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lstring.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lstrlib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\ltable.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\ltablib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\ltm.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lua.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lundump.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lutf8lib.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lvm.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)LUA\lzio.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)MainComponent.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)MainComponent_BindLua.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Matrix_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)RenderPath2D.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)RenderPath2D_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)RenderPath3D.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)RenderPath3D_BindLua.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)RenderPath_BindLua.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)SpriteAnim_BindLua.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Texture_BindLua.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Vector_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiBackLog.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiBackLog_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiEmittedParticle.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiFadeManager.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiFont.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiNetwork_Linux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiSDLInput.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiSpriteFont_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiGraphicsDevice_DX11.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiGUI.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiHairParticle.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiHelper.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiImage.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiImageParams_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiInitializer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiInput.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiInput_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiIntersect.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiIntersect_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiJobSystem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiNetwork_UWP.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiNetwork_Windows.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiPhysicsEngine_Bullet.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiMath.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiNetwork_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiOcean.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiProfiler.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiRandom.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiRawInput.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiRectPacker.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiRenderer.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiRenderer_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiResourceManager.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiScene.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiScene_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiScene_Serializers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiSprite.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiSpriteFont.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)wiSprite_BindLua.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiStartupArguments.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiTextureHelper.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)wiTimer.cpp" />

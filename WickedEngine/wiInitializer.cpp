@@ -38,11 +38,9 @@ namespace wiInitializer
 		wiJobSystem::Execute(ctx, [](wiJobArgs args) { wiGPUBVH::Initialize(); });
 #ifndef GGREDUCED
 		wiJobSystem::Execute(ctx, [](wiJobArgs args) { wiPhysicsEngine::Initialize(); });
-#endif
-
 		// Initialize this immediately:
 		wiLua::Initialize();
-
+#endif
 	}
 
 	bool IsInitializeFinished()

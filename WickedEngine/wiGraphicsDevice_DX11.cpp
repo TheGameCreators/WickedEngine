@@ -3267,6 +3267,16 @@ void GraphicsDevice_DX11::CopyResource(const GPUResource* pDst, const GPUResourc
 	auto internal_state_dst = to_internal(pDst);
 	deviceContexts[cmd]->CopyResource(internal_state_dst->resource.Get(), internal_state_src->resource.Get());
 }
+#ifdef GGREDUCED
+void GraphicsDevice_DX11::CopyTexture2D_Region(const Texture* pDst, uint32_t dstMip, uint32_t dstX, uint32_t dstY, const Texture* pSrc, uint32_t srcMip, CommandList cmd)
+{
+	assert(pDst != nullptr && pSrc != nullptr);
+	auto internal_state_src = to_internal(pSrc);
+	auto internal_state_dst = to_internal(pDst);
+	deviceContexts[cmd]->CopySubresourceRegion(internal_state_dst->resource.Get(), D3D11CalcSubresource(dstMip, 0, pDst->GetDesc().MipLevels), dstX, dstY, 0,
+		internal_state_src->resource.Get(), D3D11CalcSubresource(srcMip, 0, pSrc->GetDesc().MipLevels), nullptr);
+}
+#endif
 void GraphicsDevice_DX11::UpdateBuffer(const GPUBuffer* buffer, const void* data, CommandList cmd, int dataSize)
 {
 	assert(buffer->desc.Usage != USAGE_IMMUTABLE && "Cannot update IMMUTABLE GPUBuffer!");
