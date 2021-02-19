@@ -34,8 +34,18 @@ namespace wiResourceManager
 		IMPORT_COLORGRADINGLUT = 1 << 0,
 	};
 
+#ifdef GGREDUCED
+	// Extra Error Info
+	void SetErrorCode(int iCode);
+	int GetErrorCode(void);
+#endif
+
 	// Load a resource
 	std::shared_ptr<wiResource> Load(const std::string& name, uint32_t flags = EMPTY);
+#ifdef GGREDUCED
+	// Free a previously loaded resource
+	void FreeResource(const std::string& name);
+#endif
 	// Check if a resource is currently loaded
 	bool Contains(const std::string& name);
 	// Register a pre-created resource

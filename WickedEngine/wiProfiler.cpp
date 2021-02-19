@@ -20,6 +20,12 @@ namespace wiProfiler
 {
 	bool ENABLED = false;
 	bool initialized = false;
+#ifdef GGREDUCED
+	int iDrawCalls = 0, iOldDrawCalls = 0;
+	int iPolygonDrawed = 0;
+	int iDrawCallsShadows = 0, iOldDrawCallsShadows = 0;
+	int iDrawCallsTransparent = 0, iOldDrawCallsTransparent = 0;
+#endif
 	std::mutex lock;
 	range_id cpu_frame;
 	range_id gpu_frame;
@@ -80,6 +86,16 @@ namespace wiProfiler
 
 		CommandList cmd = wiRenderer::GetDevice()->BeginCommandList();
 		gpu_frame = BeginRangeGPU("GPU Frame", cmd);
+
+#ifdef GGREDUCED
+		iOldDrawCalls = iDrawCalls;
+		iDrawCalls = 0;
+		iPolygonDrawed = 0;
+		iOldDrawCallsShadows = iDrawCallsShadows;
+		iOldDrawCallsTransparent = iDrawCallsTransparent;
+		iDrawCallsShadows = 0;
+		iDrawCallsTransparent = 0;
+#endif
 	}
 	void EndFrame(CommandList cmd)
 	{
@@ -220,8 +236,67 @@ namespace wiProfiler
 		lock.unlock();
 	}
 
+#ifdef GGREDUCED
+	int GetDrawCalls(void)
+	{
+		return(iOldDrawCalls);
+	}
+	int GetPolygons(void)
+	{
+		return(iPolygonDrawed);
+	}
+	void CountDrawCalls(void)
+	{
+		iDrawCalls++;
+	}
+	void CountPolygons(int iPoly)
+	{
+		iPolygonDrawed += iPoly;
+	}
+	void CountDrawCallsShadows(void) { iDrawCallsShadows++; }
+	int GetDrawCallsShadows(void) { return(iOldDrawCallsShadows); };
+
+	void CountDrawCallsTransparent(void) { iDrawCallsTransparent++; }
+	int GetDrawCallsTransparent(void) { return(iOldDrawCallsTransparent); };
+
+	//We need the data returned here.
+	std::string GetProfilerData(void)
+	{
+		if (!ENABLED || !initialized)
+			return "Profiler not initialized.";
+
+		stringstream ss("");
+		ss.precision(2);
+		ss << "Profiler:" << endl << "----------------------------" << endl;
+
+		// Print CPU ranges:
+		for (auto& x : ranges)
+		{
+			if (x.second.IsCPURange())
+			{
+				ss << x.second.name << ": " << fixed << x.second.time << " ms" << endl;
+			}
+		}
+		ss << endl;
+
+		// Print GPU ranges:
+		for (auto& x : ranges)
+		{
+			if (!x.second.IsCPURange())
+			{
+				ss << x.second.name << ": " << fixed << x.second.time << " ms" << endl;
+			}
+		}
+		return ss.str();
+	}
+#endif
+
 	void DrawData(float x, float y, CommandList cmd)
 	{
+#ifdef GGREDUCED
+		//PE: Never draw profiler data in GG.
+		return;
+#endif
 		if (!ENABLED || !initialized)
 			return;
 

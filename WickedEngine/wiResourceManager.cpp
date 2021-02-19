@@ -42,6 +42,13 @@ namespace wiResourceManager
 		std::make_pair("OGG", wiResource::SOUND),
 	};
 
+#ifdef GGREDUCED
+	// global to store special error cases we can gracefully report
+	int g_iErrorCode = 0;
+	void SetErrorCode(int iCode) { g_iErrorCode = iCode; }
+	int GetErrorCode(void) { return g_iErrorCode; }
+#endif
+
 	std::shared_ptr<wiResource> Load(const std::string& name, uint32_t flags)
 	{
 		locker.lock();
@@ -103,8 +110,14 @@ namespace wiResourceManager
 					desc.ArraySize = 1;
 					desc.BindFlags = BIND_SHADER_RESOURCE;
 					desc.CPUAccessFlags = 0;
+#ifdef GGREDUCED
+					// this is either very clever, or very silly ;)
+					desc.Width = dds.GetWidth();
+					desc.Height = dds.GetHeight();
+#else
 					desc.Height = dds.GetWidth();
 					desc.Width = dds.GetHeight();
+#endif
 					desc.Depth = dds.GetDepth();
 					desc.MipLevels = dds.GetMipCount();
 					desc.ArraySize = dds.GetArraySize();
@@ -119,6 +132,13 @@ namespace wiResourceManager
 					}
 
 					auto ddsFormat = dds.GetFormat();
+#ifdef GGREDUCED
+					if (ddsFormat == tinyddsloader::DDSFile::DXGIFormat::Unknown)
+					{
+						// should replace tinyDDS with DirectXTex loadder from old graphics engine!
+						return nullptr;
+					}
+#endif
 
 					switch (ddsFormat)
 					{
@@ -139,6 +159,9 @@ namespace wiResourceManager
 					case tinyddsloader::DDSFile::DXGIFormat::R10G10B10A2_UNorm: desc.Format = FORMAT_R10G10B10A2_UNORM; break;
 					case tinyddsloader::DDSFile::DXGIFormat::R10G10B10A2_UInt: desc.Format = FORMAT_R10G10B10A2_UINT; break;
 					case tinyddsloader::DDSFile::DXGIFormat::R11G11B10_Float: desc.Format = FORMAT_R11G11B10_FLOAT; break;
+#ifdef GGREDUCED
+					case tinyddsloader::DDSFile::DXGIFormat::B8G8R8X8_UNorm: desc.Format = FORMAT_B8G8R8A8_UNORM; break;
+#endif
 					case tinyddsloader::DDSFile::DXGIFormat::B8G8R8A8_UNorm: desc.Format = FORMAT_B8G8R8A8_UNORM; break;
 					case tinyddsloader::DDSFile::DXGIFormat::B8G8R8A8_UNorm_SRGB: desc.Format = FORMAT_B8G8R8A8_UNORM_SRGB; break;
 					case tinyddsloader::DDSFile::DXGIFormat::R8G8B8A8_UNorm: desc.Format = FORMAT_R8G8B8A8_UNORM; break;
@@ -181,6 +204,16 @@ namespace wiResourceManager
 					case tinyddsloader::DDSFile::DXGIFormat::BC5_SNorm: desc.Format = FORMAT_BC5_SNORM; break;
 					case tinyddsloader::DDSFile::DXGIFormat::BC7_UNorm: desc.Format = FORMAT_BC7_UNORM; break;
 					case tinyddsloader::DDSFile::DXGIFormat::BC7_UNorm_SRGB: desc.Format = FORMAT_BC7_UNORM_SRGB; break;
+
+#ifdef GGREDUCED
+					case tinyddsloader::DDSFile::DXGIFormat::R8G8B8_UNorm:
+						// DDS format is an old one, and not supported by tinyDDS!
+						g_iErrorCode = 1;
+						resource.reset();
+						return nullptr;
+						break;
+#endif
+
 					default:
 						assert(0); // incoming format is not supported 
 						break;
@@ -228,8 +261,15 @@ namespace wiResourceManager
 					device->SetName(image, name.c_str());
 					success = image;
 				}
-				else assert(0); // failed to load DDS
-
+				else
+				{
+#ifdef GGREDUCED
+				// should replace tinyDDS with DirectXTex loadder from old graphics engine!
+				return nullptr;
+#else
+				assert(0); // failed to load DDS
+#endif
+				}
 			}
 			else
 			{
@@ -352,6 +392,20 @@ namespace wiResourceManager
 
 		return nullptr;
 	}
+
+#ifdef GGREDUCED
+	void FreeResource(const std::string& name)
+	{
+		// need to be able to release resources (in cases where a texture file has been overwritten
+		// and needs to be represented in the render with the latest data)
+		locker.lock();
+		std::weak_ptr<wiResource>& weak_resource = resources[name];
+		std::shared_ptr<wiResource> resource = weak_resource.lock();
+		locker.unlock();
+		resources.erase(name);
+		resource.reset();
+	}
+#endif
 
 	bool Contains(const std::string& name)
 	{

@@ -26,6 +26,17 @@ namespace wiGraphics
 		uint32_t VARIABLE_RATE_SHADING_TILE_SIZE = 0;
 		uint64_t TIMESTAMP_FREQUENCY = 0;
 
+#ifdef GGREDUCED
+	public:
+		virtual void* GetDeviceForIMGUI(void) = 0;
+		virtual void* GetImmediateForIMGUI(void) = 0;
+		virtual void* GetDeviceContext(int cmd) = 0;
+		virtual void SetScissorArea(int cmd, const XMFLOAT4 area) = 0;
+		virtual void SetRenderTarget(CommandList cmd, void* renderTarget) = 0;
+		virtual void* MaterialGetSRV(void* resource) = 0;
+		virtual void* GetBackBufferForGG(void) = 0;
+#endif
+
 	public:
 		virtual bool CreateBuffer(const GPUBufferDesc *pDesc, const SubresourceData* pInitialData, GPUBuffer *pBuffer) = 0;
 		virtual bool CreateTexture(const TextureDesc* pDesc, const SubresourceData *pInitialData, Texture *pTexture) = 0;

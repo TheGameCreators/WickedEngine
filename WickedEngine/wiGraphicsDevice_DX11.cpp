@@ -1577,6 +1577,63 @@ Texture GraphicsDevice_DX11::GetBackBuffer()
 	return result;
 }
 
+#ifdef GGREDUCED
+
+void* GraphicsDevice_DX11::GetBackBufferForGG(void)
+{
+	return (void*)backBuffer.Get();
+}
+void* GraphicsDevice_DX11::GetDeviceForIMGUI(void)
+{
+	return (void*)device.Get();
+}
+void* GraphicsDevice_DX11::GetImmediateForIMGUI(void)
+{
+	return (void*)immediateContext.Get();
+}
+void* GraphicsDevice_DX11::GetDeviceContext(int cmd)
+{
+	return (void*)deviceContexts[cmd].Get();
+}
+void GraphicsDevice_DX11::SetScissorArea(int cmd, const XMFLOAT4 area)
+{
+	D3D11_RECT pRects[1];
+	pRects[0].bottom = area.w;
+	pRects[0].left = area.x;
+	pRects[0].right = area.z;
+	pRects[0].top = area.y;
+	deviceContexts[cmd]->RSSetScissorRects(1, pRects);
+}
+
+void GraphicsDevice_DX11::SetRenderTarget(CommandList cmd, void* renderView)
+{
+	ID3D11RenderTargetView* RTV = (ID3D11RenderTargetView*)renderView;
+	deviceContexts[cmd]->OMSetRenderTargets(1, &RTV, 0);
+}
+
+void* GraphicsDevice_DX11::MaterialGetSRV(void* resource)
+{
+	GPUResource* res = (GPUResource*)resource;
+
+	if (res != nullptr && res->IsValid())
+	{
+		auto internal_state = to_internal(res);
+		ID3D11ShaderResourceView* SRV;
+
+		//PE: Will check if i get the same.
+		// leelee, debug crashes here for some reason - how can this be null (or 0xddddddddddddddd)
+		ID3D11ShaderResourceView* pSRVPtr = internal_state->srv.Get();
+		if (internal_state->srv == NULL || pSRVPtr == NULL || pSRVPtr == (ID3D11ShaderResourceView*)0xdddddddddddddddd)
+			return NULL;
+
+		SRV = internal_state->srv.Get();
+		return(SRV);
+	}
+	return NULL;
+
+}
+#endif
+
 bool GraphicsDevice_DX11::CreateBuffer(const GPUBufferDesc *pDesc, const SubresourceData* pInitialData, GPUBuffer *pBuffer)
 {
 	auto internal_state = std::make_shared<Resource_DX11>();
@@ -1647,8 +1704,23 @@ bool GraphicsDevice_DX11::CreateTexture(const TextureDesc* pDesc, const Subresou
 	break;
 	case TextureDesc::TEXTURE_2D:
 	{
+#ifdef GGREDUCED 
+		try
+		{
+			// attempt to load the texture file
+			D3D11_TEXTURE2D_DESC desc = _ConvertTextureDesc2D(&pTexture->desc);
+			hr = device->CreateTexture2D(&desc, data.data(), (ID3D11Texture2D**)internal_state->resource.ReleaseAndGetAddressOf());
+		}
+		catch (...)
+		{
+			// Some .DDS files cannot load with this approach (possibly due to corrupt DDS texture files, i.e W instead of H, 12 mipmaps, etc)
+			hr = S_FALSE;
+		}
+#else
 		D3D11_TEXTURE2D_DESC desc = _ConvertTextureDesc2D(&pTexture->desc);
 		hr = device->CreateTexture2D(&desc, data.data(), (ID3D11Texture2D**)internal_state->resource.ReleaseAndGetAddressOf());
+#endif
+
 	}
 	break;
 	case TextureDesc::TEXTURE_3D:
@@ -2583,6 +2655,13 @@ void GraphicsDevice_DX11::PresentEnd(CommandList cmd)
 {
 	SubmitCommandLists();
 
+#ifdef GGREDUCED
+	//PE: We need to disable present when grabbing from the backbuffer.
+	extern bool g_bNoSwapchainPresent;
+	if (g_bNoSwapchainPresent)
+		swapChain->Present(0, DXGI_PRESENT_TEST); //VSYNC
+	else
+#endif
 	swapChain->Present(VSYNC, 0);
 }
 

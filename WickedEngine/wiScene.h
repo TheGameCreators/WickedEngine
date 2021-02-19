@@ -1009,7 +1009,11 @@ namespace wiScene
 		float end = 0;
 		float timer = 0;
 		float amount = 1;	// blend amount
+#ifdef GGREDUCED
+		float speed = 50;
+#else
 		float speed = 1;
+#endif
 
 		struct AnimationChannel
 		{
@@ -1021,6 +1025,14 @@ namespace wiScene
 
 			wiECS::Entity target = wiECS::INVALID_ENTITY;
 			int samplerIndex = -1;
+
+#ifdef GGREDUCED
+			int iUsePreFrame = 0;
+			float fSmoothAmount = 1.0f;
+			XMVECTOR vPreFrameScale;
+			XMVECTOR qPreFrameRotation;
+			XMVECTOR vPreFrameTranslation;
+#endif
 
 			enum Path
 			{
@@ -1068,6 +1080,12 @@ namespace wiScene
 		inline void Pause() { _flags &= ~PLAYING; }
 		inline void Stop() { Pause(); timer = 0.0f; }
 		inline void SetLooped(bool value = true) { if (value) { _flags |= LOOPED; } else { _flags &= ~LOOPED; } }
+
+#ifdef GGREDUCED
+		inline void SetSpeed(float fSpeed = 1.0f) { speed = fSpeed; }
+		bool updateonce = false;
+		inline void SetUpdateOnce() { updateonce = true; }
+#endif
 
 		void Serialize(wiArchive& archive, wiECS::EntitySerializer& seri);
 	};

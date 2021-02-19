@@ -4,8 +4,11 @@
 #include "wiSpriteFont.h"
 #include "wiRenderer.h"
 
-using namespace wiGraphics;
+#ifdef GGREDUCED
+void ImGuiHook_RenderCall(void* ctx);
+#endif
 
+using namespace wiGraphics;
 
 void RenderPath2D::ResizeBuffers()
 {
@@ -39,8 +42,13 @@ void RenderPath2D::ResizeBuffers()
 		TextureDesc desc;
 		desc.BindFlags = BIND_RENDER_TARGET | BIND_SHADER_RESOURCE;
 		desc.Format = defaultTextureFormat;
+#ifdef GGREDUCED
+		desc.Width = wiRenderer::GetRenderResolutionWidth();
+		desc.Height = wiRenderer::GetRenderResolutionHeight();
+#else
 		desc.Width = device->GetResolutionWidth();
 		desc.Height = device->GetResolutionHeight();
+#endif
 		device->CreateTexture(&desc, nullptr, &rtFinal);
 		device->SetName(&rtFinal, "rtFinal");
 	}
@@ -192,6 +200,12 @@ void RenderPath2D::FixedUpdate()
 }
 void RenderPath2D::Render() const
 {
+#ifdef GGREDUCED
+	extern bool g_bNo2DRender;
+	if (g_bNo2DRender)
+		return;
+#endif
+
 	GraphicsDevice* device = wiRenderer::GetDevice();
 	CommandList cmd = device->BeginCommandList();
 
@@ -304,11 +318,23 @@ void RenderPath2D::Render() const
 }
 void RenderPath2D::Compose(CommandList cmd) const
 {
+#ifdef GGREDUCED
+	extern bool g_bNo2DRender;
+	if (g_bNo2DRender)
+		return;
+#endif
+
 	wiImageParams fx;
 	fx.enableFullScreen();
 	fx.blendFlag = BLENDMODE_PREMULTIPLIED;
 
 	wiImage::Draw(&rtFinal, fx, cmd);
+
+#ifdef GGREDUCED
+	// hook back to main app to allow it to render IMGUI IDE
+	GraphicsDevice* device = wiRenderer::GetDevice();
+	ImGuiHook_RenderCall((void*)device->GetDeviceContext(cmd));
+#endif
 
 	RenderPath::Compose(cmd);
 }

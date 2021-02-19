@@ -204,6 +204,17 @@ namespace wiGraphics
 
 		std::vector<StaticSampler> common_samplers;
 
+#ifdef GGREDUCED
+		public:
+			void* GetDeviceForIMGUI(void) override;
+			void* GetImmediateForIMGUI(void) override;
+			void* GetDeviceContext(int cmd) override;
+			void SetScissorArea(int cmd, const XMFLOAT4 area) override;
+			void SetRenderTarget(CommandList cmd, void* renderTarget) override;
+			void* MaterialGetSRV(void* resource) override;
+			void* GetBackBufferForGG(void) override;
+#endif
+
 	public:
 		GraphicsDevice_Vulkan(wiPlatform::window_type window, bool fullscreen = false, bool debuglayer = false);
 		virtual ~GraphicsDevice_Vulkan();

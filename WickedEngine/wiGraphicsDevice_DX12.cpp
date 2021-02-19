@@ -2838,6 +2838,35 @@ using namespace DX12_Internal;
 		return result;
 	}
 
+#ifdef GGREDUCED
+	void* GraphicsDevice_DX12::GetDeviceForIMGUI(void)
+	{
+		return NULL;
+	}
+	void* GraphicsDevice_DX12::GetBackBufferForGG(void)
+	{
+		return NULL;
+	}
+	void* GraphicsDevice_DX12::GetImmediateForIMGUI(void)
+	{
+		return NULL;
+	}
+	void* GraphicsDevice_DX12::GetDeviceContext(int cmd)
+	{
+		return NULL;
+	}
+	void GraphicsDevice_DX12::SetScissorArea(int cmd, const XMFLOAT4 area)
+	{
+	}
+	void GraphicsDevice_DX12::SetRenderTarget(CommandList cmd, void* renderView)
+	{
+	}
+	void* GraphicsDevice_DX12::MaterialGetSRV(void* resource)
+	{
+		return NULL;
+	}
+#endif
+
 	bool GraphicsDevice_DX12::CreateBuffer(const GPUBufferDesc* pDesc, const SubresourceData* pInitialData, GPUBuffer* pBuffer)
 	{
 		auto internal_state = std::make_shared<Resource_DX12>();

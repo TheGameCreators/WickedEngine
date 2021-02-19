@@ -81,6 +81,17 @@ namespace wiGraphics
 		struct EmptyResourceHandle {}; // only care about control-block
 		std::shared_ptr<EmptyResourceHandle> emptyresource;
 
+#ifdef GGREDUCED
+	public:
+		void* GetDeviceForIMGUI(void) override;
+		void* GetImmediateForIMGUI(void) override;
+		void* GetDeviceContext(int cmd) override;
+		void SetScissorArea(int cmd, const XMFLOAT4 area) override;
+		void SetRenderTarget(CommandList cmd, void* renderTarget) override;
+		void* MaterialGetSRV(void* resource) override;
+		void* GetBackBufferForGG(void) override;
+#endif
+
 	public:
 		GraphicsDevice_DX11(wiPlatform::window_type window, bool fullscreen = false, bool debuglayer = false);
 

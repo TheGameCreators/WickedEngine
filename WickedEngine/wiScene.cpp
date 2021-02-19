@@ -1352,7 +1352,9 @@ namespace wiScene
 
 		RunWeatherUpdateSystem(ctx);
 
+#ifndef GGREDUCED
 		wiPhysicsEngine::RunPhysicsUpdateSystem(ctx, *this, dt); // this syncs dependencies internally
+#endif
 
 		RunObjectUpdateSystem(ctx);
 
@@ -1902,10 +1904,16 @@ namespace wiScene
 		for (size_t i = 0; i < animations.GetCount(); ++i)
 		{
 			AnimationComponent& animation = animations[i];
+
+#ifdef GGREDUCED
+			if ((!animation.IsPlaying() && animation.timer == 0.0f) && animation.updateonce == false) continue;
+			animation.updateonce = false;
+#else
 			if (!animation.IsPlaying() && animation.timer == 0.0f)
 			{
 				continue;
 			}
+#endif
 
 			for (const AnimationComponent::AnimationChannel& channel : animation.channels)
 			{
@@ -2153,7 +2161,73 @@ namespace wiScene
 				{
 					target_transform->SetDirty();
 
+					// additional functionality to impose other animation frames to the current frame
+					// and adjust the rotation of frames for post-animation features such as head turning
+#ifdef GGREDUCED
+					float t = animation.amount;
+
+					if (channel.iUsePreFrame == 1)
+					{
+						// merge preframe with current frame
+						switch (channel.path)
+						{
+						case AnimationComponent::AnimationChannel::Path::TRANSLATION:
+						{
+							XMVECTOR preframeT = channel.vPreFrameTranslation;
+							XMVECTOR currentT = XMLoadFloat3(&transform.translation_local);
+							XMVECTOR resultT = XMVectorAdd(preframeT, currentT); //?hmm
+							XMStoreFloat3(&transform.translation_local, resultT);
+							break;
+						}
+						case AnimationComponent::AnimationChannel::Path::ROTATION:
+						{
+							XMVECTOR preframeR = channel.qPreFrameRotation;
+							XMVECTOR currentR = XMLoadFloat4(&transform.rotation_local);
+							XMVECTOR resultR = XMQuaternionMultiply(preframeR, currentR);
+							XMStoreFloat4(&transform.rotation_local, resultR);
+							break;
+						}
+						case AnimationComponent::AnimationChannel::Path::SCALE:
+						{
+							XMVECTOR preframeS = channel.vPreFrameScale;
+							XMVECTOR currentS = XMLoadFloat3(&transform.scale_local);
+							XMVECTOR resultS = XMVectorMultiply(preframeS, currentS);
+							XMStoreFloat3(&transform.scale_local, resultS);
+							break;
+						}
+						}
+					}
+					if (channel.iUsePreFrame == 2)
+					{
+						// entirely replace frame with preframe
+						switch (channel.path)
+						{
+						case AnimationComponent::AnimationChannel::Path::TRANSLATION:
+						{
+							XMVECTOR preframeT = channel.vPreFrameTranslation;
+							XMStoreFloat3(&transform.translation_local, preframeT);
+							break;
+						}
+						case AnimationComponent::AnimationChannel::Path::ROTATION:
+						{
+							XMVECTOR preframeR = channel.qPreFrameRotation;
+							XMStoreFloat4(&transform.rotation_local, preframeR);
+							break;
+						}
+						case AnimationComponent::AnimationChannel::Path::SCALE:
+						{
+							XMVECTOR preframeS = channel.vPreFrameScale;
+							XMStoreFloat3(&transform.scale_local, preframeS);
+							break;
+						}
+						}
+
+						// use fSmoothAmount to introduce this frame smoothly into current frame
+						t = channel.fSmoothAmount;
+					}
+#else
 					const float t = animation.amount;
+#endif
 
 					const XMVECTOR aS = XMLoadFloat3(&target_transform->scale_local);
 					const XMVECTOR aR = XMLoadFloat4(&target_transform->rotation_local);
@@ -3042,6 +3116,10 @@ namespace wiScene
 		{
 		    P = mesh.vertex_positions_morphed[index].LoadPOS();
 		}
+#ifdef GGREDUCED
+		if (index >= mesh.vertex_boneindices.size()) return(P);
+		if (index >= mesh.vertex_boneweights.size()) return(P);
+#endif
 		const XMUINT4& ind = mesh.vertex_boneindices[index];
 		const XMFLOAT4& wei = mesh.vertex_boneweights[index];
 
@@ -3155,6 +3233,13 @@ namespace wiScene
 					continue;
 				}
 
+#ifdef GGREDUCED
+				if (!object.IsRenderable())
+				{
+					//PE: Do not Pick from hidden objects.
+					continue;
+				}
+#endif
 				Entity entity = scene.aabb_objects.GetEntity(i);
 				const LayerComponent* layer = scene.layers.GetComponent(entity);
 				if (layer != nullptr && !(layer->GetLayerMask() & layerMask))

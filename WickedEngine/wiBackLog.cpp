@@ -62,7 +62,13 @@ namespace wiBackLog
 	}
 	void Update() 
 	{
+#ifdef GGREDUCED
+		//PE: Backlog renders to imgui window, keep it here if we need it , but RSHIFT-RCONTROL-HOME needed to acticate it.
+		//PE: This did not work , must be activated somewhere else.
+		if (wiInput::Press(wiInput::KEYBOARD_BUTTON_HOME) && wiInput::Down(wiInput::KEYBOARD_BUTTON_RCONTROL) && wiInput::Down(wiInput::KEYBOARD_BUTTON_RSHIFT))
+#else
 		if (wiInput::Press(wiInput::KEYBOARD_BUTTON_HOME))
+#endif
 		{
 			Toggle();
 		}
@@ -113,7 +119,11 @@ namespace wiBackLog
 	}
 	void Draw(CommandList cmd)
 	{
-		if (state != DISABLED) 
+#ifdef GGREDUCED
+		//PE: Bakclog can be activate from somewhere else , so just dont render it.
+		return;
+#endif
+		if (state != DISABLED)
 		{
 			if (backgroundTex == nullptr)
 			{
@@ -182,7 +192,9 @@ namespace wiBackLog
 		if (history.size() > deletefromline) {
 			history.pop_front();
 		}
+#ifndef GGREDUCED
 		wiLua::RunText(inputArea.str());
+#endif
 		inputArea.str("");
 	}
 	void deletefromInput() 

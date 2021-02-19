@@ -248,5 +248,8 @@ public:
 	void Update(float dt) override;
 	void Render() const override;
 	void Compose(wiGraphics::CommandList cmd) const override;
+#ifdef GGREDUCED
+	void ComposeSimple(wiGraphics::CommandList cmd) const;
+#endif
 };
 

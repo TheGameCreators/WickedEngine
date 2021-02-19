@@ -557,6 +557,13 @@ namespace wiRenderer
 
 	void SetTransparentShadowsEnabled(float value);
 	float GetTransparentShadowsEnabled();
+#ifdef GGREDUCED
+	void SetRenderResolution(uint32_t width, uint32_t height);
+	uint32_t GetRenderResolutionWidth();
+	uint32_t GetRenderResolutionHeight();
+#endif
+	XMUINT2 GetInternalResolution();
+	bool ResolutionChanged();
 	void SetGamma(float value);
 	float GetGamma();
 	void SetWireRender(bool value);

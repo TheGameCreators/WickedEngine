@@ -6,6 +6,10 @@
 #include "ResourceMapping.h"
 #include "wiProfiler.h"
 
+#ifdef GGREDUCED
+bool ImGuiHook_GetScissorArea(float* pX1, float* pY1, float* pX2, float* pY2);
+#endif
+
 using namespace wiGraphics;
 
 void RenderPath3D::ResizeBuffers()
@@ -917,6 +921,13 @@ void RenderPath3D::Render() const
 		);
 		wiRenderer::BindCommonResources(cmd);
 
+#ifdef GGREDUCED
+		Viewport vp;
+		vp.Width = (float)wiRenderer::GetRenderResolutionWidth();
+		vp.Height = (float)wiRenderer::GetRenderResolutionHeight();
+		device->BindViewports(1, &vp, cmd);
+#endif
+
 		RenderLightShafts(cmd);
 
 		RenderVolumetrics(cmd);
@@ -943,6 +954,13 @@ void RenderPath3D::Compose(CommandList cmd) const
 	fx.enableFullScreen();
 
 	device->EventBegin("Composition", cmd);
+
+#ifdef GGREDUCED
+	XMFLOAT4 area;
+	if (ImGuiHook_GetScissorArea(&area.x, &area.y, &area.z, &area.w) == true)
+		device->SetScissorArea(cmd, area);
+#endif
+
 	wiImage::Draw(GetLastPostprocessRT(), fx, cmd);
 	device->EventEnd(cmd);
 
@@ -951,8 +969,27 @@ void RenderPath3D::Compose(CommandList cmd) const
 		wiImage::Draw(&debugUAV, wiImageParams((float)wiRenderer::GetDevice()->GetScreenWidth(), (float)wiRenderer::GetDevice()->GetScreenHeight()), cmd);
 	}
 
+#ifdef GGREDUCED
+	area = { 0, 0, (float)device->GetResolutionWidth(), (float)device->GetResolutionHeight() };
+	device->SetScissorArea(cmd, area);
+#endif
+
 	RenderPath2D::Compose(cmd);
 }
+
+#ifdef GGREDUCED
+void RenderPath3D::ComposeSimple(CommandList cmd) const
+{
+	GraphicsDevice* device = wiRenderer::GetDevice();
+
+	wiImageParams fx;
+	fx.blendFlag = BLENDMODE_OPAQUE;
+	fx.quality = QUALITY_LINEAR;
+	fx.enableFullScreen();
+
+	wiImage::Draw(GetLastPostprocessRT(), fx, cmd);
+}
+#endif
 
 void RenderPath3D::RenderFrameSetUp(CommandList cmd) const
 {
@@ -1214,7 +1251,15 @@ void RenderPath3D::RenderTransparents(CommandList cmd) const
 
 	wiRenderer::DrawLightVisualizers(visibility_main, cmd);
 
+#ifdef GGREDUCED
+	auto range = wiProfiler::BeginRangeGPU("Particles - Render", cmd);
+#else
+	auto range = wiProfiler::BeginRangeGPU("EmittedParticles - Render", cmd);
+#endif
+
 	wiRenderer::DrawSoftParticles(visibility_main, rtLinearDepth, false, cmd);
+
+	// though wiProfiler::EndRange(range); seems to be missing!
 
 	if (getVolumeLightsEnabled() && visibility_main.IsRequestedVolumetricLights())
 	{
@@ -1245,6 +1290,11 @@ void RenderPath3D::RenderTransparents(CommandList cmd) const
 
 	// Distortion particles:
 	{
+#ifdef GGREDUCED
+		auto range = wiProfiler::BeginRangeGPU("Particles - Render (Distortion)", cmd);
+#else
+		auto range = wiProfiler::BeginRangeGPU("EmittedParticles - Render (Distortion)", cmd);
+#endif
 		device->RenderPassBegin(&renderpass_particledistortion, cmd);
 
 		Viewport vp;
@@ -1255,6 +1305,9 @@ void RenderPath3D::RenderTransparents(CommandList cmd) const
 		wiRenderer::DrawSoftParticles(visibility_main, rtLinearDepth, true, cmd);
 
 		device->RenderPassEnd(cmd);
+
+		// device->MSAAResolve missing and had to add this!!
+		wiProfiler::EndRange(range);
 	}
 }
 void RenderPath3D::RenderPostprocessChain(CommandList cmd) const
@@ -1374,16 +1427,18 @@ void RenderPath3D::RenderPostprocessChain(CommandList cmd) const
 			device->UnbindResources(TEXSLOT_ONDEMAND0, 1, cmd);
 		}
 
+#ifndef GGREDUCED
 		// GUI Background blurring:
 		{
 			auto range = wiProfiler::BeginRangeGPU("GUI Background Blur", cmd);
 			device->EventBegin("GUI Background Blur", cmd);
 			wiRenderer::Postprocess_Downsample4x(*rt_read, rtGUIBlurredBackground[0], cmd);
 			wiRenderer::Postprocess_Downsample4x(rtGUIBlurredBackground[0], rtGUIBlurredBackground[2], cmd);
-			wiRenderer::Postprocess_Blur_Gaussian(rtGUIBlurredBackground[2], rtGUIBlurredBackground[1], rtGUIBlurredBackground[2], cmd, -1,-1, true);
+			wiRenderer::Postprocess_Blur_Gaussian(rtGUIBlurredBackground[2], rtGUIBlurredBackground[1], rtGUIBlurredBackground[2], cmd, -1, -1, true);
 			device->EventEnd(cmd);
 			wiProfiler::EndRange(range);
 		}
+#endif
 	}
 }
 

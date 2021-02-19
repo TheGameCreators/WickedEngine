@@ -33,6 +33,11 @@
 #include <deque>
 #include <array>
 
+#ifdef GGREDUCED
+//PE: Sorry LMFIX need Wicked function.
+float fWickedCallShadowFarPlane = 1200.0f;
+#endif
+
 using namespace std;
 using namespace wiGraphics;
 using namespace wiScene;
@@ -41,6 +46,12 @@ using namespace wiAllocators;
 
 namespace wiRenderer
 {
+
+#ifdef GGREDUCED
+	// renderer resolution may be different from device resolution
+	XMUINT2 renderResolution = { 0,0 };
+	bool renderResolutionChanged = false;
+#endif
 
 std::shared_ptr<GraphicsDevice> device;
 
@@ -54,7 +65,15 @@ GPUBuffer			constantBuffers[CBTYPE_COUNT];
 GPUBuffer			resourceBuffers[RBTYPE_COUNT];
 Sampler				samplers[SSLOT_COUNT];
 
+#ifdef GGREDUCED
+#ifdef GGREDUCEDEDITOR
 string SHADERPATH = wiHelper::GetOriginalWorkingDirectory() + "../WickedEngine/shaders/";
+#else
+string SHADERPATH = wiHelper::GetOriginalWorkingDirectory() + "../shaders/";
+#endif
+#else
+string SHADERPATH = wiHelper::GetOriginalWorkingDirectory() + "../WickedEngine/shaders/";
+#endif
 
 LinearAllocator renderFrameAllocators[COMMANDLIST_COUNT]; // can be used by graphics threads
 inline LinearAllocator& GetRenderFrameAllocator(CommandList cmd)
@@ -99,7 +118,9 @@ bool tessellationEnabled = true;
 bool disableAlbedoMaps = false;
 uint32_t raytracedShadowsSampleCount = 1;
 bool SCREENSPACESHADOWS = false;
-
+#ifdef GGREDUCED
+float RESOLUTIONSCALE = 1.0f;
+#endif
 
 struct VoxelizedSceneData
 {
@@ -346,6 +367,17 @@ struct RenderQueue
 		}
 		batchCount++; 
 	}
+#ifdef GGREDUCED
+	inline void sortdistance(RenderQueueSortType sortType = SORT_FRONT_TO_BACK)
+	{
+		if (batchCount > 1)
+		{
+			std::sort(batchArray, batchArray + batchCount, [sortType](const RenderBatch& a, const RenderBatch& b) -> bool {
+				return ((sortType == SORT_FRONT_TO_BACK) ? (a.distance < b.distance) : (a.distance > b.distance));
+			});
+		}
+	}
+#endif
 	inline void sort(RenderQueueSortType sortType = SORT_FRONT_TO_BACK)
 	{
 		if (batchCount > 1)
@@ -2466,13 +2498,25 @@ inline void CreateDirLightShadowCams(const LightComponent& light, CameraComponen
 	const XMMATRIX lightView = XMMatrixLookToLH(XMVectorZero(), to, up); // important to not move (zero out eye vector) the light view matrix itself because texel snapping must be done on projection matrix!
 	const float nearPlane = camera.zNearP;
 	const float farPlane = camera.zFarP;
+#ifdef GGREDUCED
+	//PE: Sorry LMFIX need Wicked function.
+	const float referenceFarPlane = fWickedCallShadowFarPlane; // cascade splits here were tested with this depth range
+#else
 	const float referenceFarPlane = 800.0f; // cascade splits here were tested with this depth range
+#endif
 	const float referenceSplitClamp = std::min(1.0f, referenceFarPlane / farPlane); // if far plane is greater than reference, do not increase cascade sizes further
 	const float splits[CASCADE_COUNT + 1] = {
-		referenceSplitClamp * 0.0f,		// near plane
+#ifdef GGREDUCED
+	referenceSplitClamp * 0.0f,		// near plane
+		referenceSplitClamp * 0.025f,	// near-mid split
+		referenceSplitClamp * 0.15f,	// mid-far split
+		referenceSplitClamp * 1.0f,		// far plane
+#else
+	referenceSplitClamp * 0.0f,		// near plane
 		referenceSplitClamp * 0.01f,	// near-mid split
 		referenceSplitClamp * 0.1f,		// mid-far split
 		referenceSplitClamp * 1.0f,		// far plane
+#endif
 	};
 
 	// Unproject main frustum corners into world space (notice the reversed Z projection!):
@@ -2873,9 +2917,19 @@ void RenderMeshes(
 				const MaterialComponent& material = *vis.scene->materials.GetComponent(subset.materialID);
 
 				bool subsetRenderable = renderTypeFlags & material.GetRenderTypes();
+#ifdef GGREDUCED
+				wiProfiler::CountDrawCalls();
+#endif
+#ifdef GGREDUCED
+				if (renderPass == RENDERTYPE_TRANSPARENT)
+					wiProfiler::CountDrawCallsTransparent();
+#endif
 
 				if (renderPass == RENDERPASS_SHADOW || renderPass == RENDERPASS_SHADOWCUBE)
 				{
+#ifdef GGREDUCED
+					wiProfiler::CountDrawCallsShadows();
+#endif
 					subsetRenderable = subsetRenderable && material.IsCastingShadow();
 				}
 
@@ -3430,8 +3484,18 @@ void UpdatePerFrameData(
 			Entity entity = scene.meshes.GetEntity(i);
 			MeshComponent& mesh = scene.meshes[i];
 
+#ifdef GGREDUCED
+			if (mesh.IsRenderable() && mesh.IsSkinned()) //PE: removed && scene.armatures.Contains(mesh.armatureID)
+#else
 			if (mesh.IsSkinned() && scene.armatures.Contains(mesh.armatureID))
+#endif
 			{
+#ifdef GGREDUCED
+				ArmatureComponent& armature = *scene.armatures.GetComponent(mesh.armatureID);
+				if (&armature != nullptr)
+				{
+#endif
+
 				const SoftBodyPhysicsComponent* softbody = scene.softbodies.GetComponent(entity);
 				if (softbody == nullptr || softbody->vertex_positions_simulation.empty())
 				{
@@ -3440,7 +3504,9 @@ void UpdatePerFrameData(
 						pendingBottomLevelBuilds[entity] = AS_UPDATE;
 					}
 
+#ifndef GGREDUCED
 					ArmatureComponent& armature = *scene.armatures.GetComponent(mesh.armatureID);
+#endif
 
 					if (!armature.boneBuffer.IsValid())
 					{
@@ -3460,6 +3526,9 @@ void UpdatePerFrameData(
 						device->CreateBuffer(&mesh.streamoutBuffer_POS.GetDesc(), nullptr, &mesh.vertexBuffer_PRE);
 					}
 					std::swap(mesh.streamoutBuffer_POS, mesh.vertexBuffer_PRE);
+#ifdef GGREDUCED
+				}
+#endif
 				}
 			}
 
@@ -4000,9 +4069,17 @@ void UpdateRenderData(
 		{
 			Entity entity = vis.scene->meshes.GetEntity(i);
 			const MeshComponent& mesh = vis.scene->meshes[i];
-
+#ifdef GGREDUCED
+			if (mesh.IsRenderable() && mesh.IsSkinned()) //PE: Removed && scene.armatures.Contains(mesh.armatureID)
+#else
 			if (mesh.IsSkinned() && vis.scene->armatures.Contains(mesh.armatureID))
+#endif
 			{
+#ifdef GGREDUCED
+				const ArmatureComponent& armature = *vis.scene->armatures.GetComponent(mesh.armatureID);
+				if (&armature != nullptr)
+				{
+#endif
 				const SoftBodyPhysicsComponent* softbody = vis.scene->softbodies.GetComponent(entity);
 				if (softbody != nullptr && softbody->physicsobject != nullptr)
 				{
@@ -4011,7 +4088,9 @@ void UpdateRenderData(
 					continue;
 				}
 
+#ifdef GGREDUCED
 				const ArmatureComponent& armature = *vis.scene->armatures.GetComponent(mesh.armatureID);
+#endif
 
 				if (!streamOutSetUp)
 				{
@@ -4066,6 +4145,9 @@ void UpdateRenderData(
 				device->BindUAVs(CS, uavs, 0, arraysize(uavs), cmd);
 
 				device->Dispatch(((uint32_t)mesh.vertex_positions.size() + SKINNING_COMPUTE_THREADCOUNT - 1) / SKINNING_COMPUTE_THREADCOUNT, 1, 1, cmd);
+#ifdef GGREDUCED
+				}
+#endif
 			}
 
 		}
@@ -4108,7 +4190,11 @@ void UpdateRenderData(
 	// GPU Particle systems simulation/sorting/culling:
 	if (!vis.visibleEmitters.empty())
 	{
+#ifdef GGREDUCED
+		range = wiProfiler::BeginRangeGPU("Particles - Simulate", cmd);
+#else
 		range = wiProfiler::BeginRangeGPU("EmittedParticles - Simulate", cmd);
+#endif
 		for (uint32_t emitterIndex : vis.visibleEmitters)
 		{
 			const wiEmittedParticle& emitter = vis.scene->emitters[emitterIndex];
@@ -5288,6 +5374,13 @@ void DrawScene(
 	device->EventEnd(cmd);
 
 }
+
+#ifdef GGREDUCED
+//LEELEE: There is new draw transparent any more!
+//PE: renderQueue.sort is not using distance but meshIndex<<8 , dist&0xff, so order of transparent mesh'es was not correct.
+//renderQueue.sortdistance(RenderQueue::SORT_BACK_TO_FRONT);
+#endif
+
 
 void DrawDebugWorld(
 	const Scene& scene,
@@ -7322,6 +7415,26 @@ void ComputeTiledLightCulling(
 	{
 		device->EventBegin("Entity Culling", cmd);
 
+		/* all this disappeared in latest!
+		GraphicsDevice* device = GetDevice();
+		int _width = GetInternalResolution().x;
+		int _height = GetInternalResolution().y;
+		const XMUINT3 tileCount = GetEntityCullingTileCount();
+		static int _savedWidth = 0;
+		static int _savedHeight = 0;
+#ifdef GGREDUCED
+		bool _resolutionChanged = false;
+#else
+		bool _resolutionChanged = device->ResolutionChanged();
+#endif
+		if (_savedWidth != _width || _savedHeight != _height)
+		{
+			_resolutionChanged = true;
+			_savedWidth = _width;
+			_savedHeight = _height;
+		}
+		*/
+
 		device->BindResource(CS, &tileFrustums, TEXSLOT_ONDEMAND0, cmd);
 
 		if (GetDebugLightCulling())
@@ -8574,6 +8687,14 @@ void UpdateCameraCB(
 )
 {
 	CameraCB cb;
+
+	/* all this changed
+#ifdef GGREDUCED
+	cb.g_xFrame_ScreenWidthHeight = float2((float)renderResolution.x, (float)renderResolution.y);
+#else
+	cb.g_xFrame_ScreenWidthHeight = float2((float)GetDevice()->GetScreenWidth(), (float)GetDevice()->GetScreenHeight());
+#endif
+*/
 
 	XMStoreFloat4x4(&cb.g_xCamera_VP, camera.GetViewProjection());
 	XMStoreFloat4x4(&cb.g_xCamera_View, camera.GetView());
@@ -13054,12 +13175,60 @@ void AddDeferredMorphUpdate(Entity entity)
 	locker.unlock();
 }
 
-
-
+#ifdef GGREDUCED
+void SetResolutionScale(float value)
+{
+	if (RESOLUTIONSCALE != value)
+	{
+		RESOLUTIONSCALE = value;
+		renderResolutionChanged = true;
+	}
+}
+#else
+void SetResolutionScale(float value) { RESOLUTIONSCALE = value; }
+#endif
+float GetResolutionScale() { return RESOLUTIONSCALE; }
 int GetShadowRes2D() { return SHADOWRES_2D; }
 int GetShadowResCube() { return SHADOWRES_CUBE; }
 void SetTransparentShadowsEnabled(float value) { TRANSPARENTSHADOWSENABLED = value; }
 float GetTransparentShadowsEnabled() { return TRANSPARENTSHADOWSENABLED; }
+#ifdef GGREDUCED
+void SetRenderResolution(uint32_t width, uint32_t height)
+{
+	if (renderResolution.x != width || renderResolution.y != height)
+	{
+		renderResolution.x = width;
+		renderResolution.y = height;
+		renderResolutionChanged = true;
+	}
+}
+XMUINT2 GetInternalResolution() { return XMUINT2((uint32_t)ceilf(renderResolution.x*GetResolutionScale()), (uint32_t)ceilf(renderResolution.y*GetResolutionScale())); }
+uint32_t GetRenderResolutionWidth() { return (uint32_t)ceilf(renderResolution.x*GetResolutionScale()); }
+uint32_t GetRenderResolutionHeight() { return (uint32_t)ceilf(renderResolution.y*GetResolutionScale()); }
+bool ResolutionChanged()
+{
+	bool changed = renderResolutionChanged;
+	renderResolutionChanged = false;
+	return changed;
+}
+#else
+XMUINT2 GetInternalResolution() { return XMUINT2((uint32_t)ceilf(GetDevice()->GetResolutionWidth()*GetResolutionScale()), (uint32_t)ceilf(GetDevice()->GetResolutionHeight()*GetResolutionScale())); }
+bool ResolutionChanged()
+{
+	//detect internal resolution change:
+	static float _savedresscale = GetResolutionScale();
+	static uint64_t lastFrameInternalResChange = 0;
+	if (_savedresscale != GetResolutionScale() || lastFrameInternalResChange == GetDevice()->GetFrameCount())
+	{
+		_savedresscale = GetResolutionScale();
+		lastFrameInternalResChange = GetDevice()->GetFrameCount();
+		return true;
+	}
+
+	// detect device resolution change:
+	return GetDevice()->ResolutionChanged();
+}
+#endif
 void SetGamma(float value) { GAMMA = value; }
 float GetGamma() { return GAMMA; }
 void SetWireRender(bool value) { wireRender = value; }

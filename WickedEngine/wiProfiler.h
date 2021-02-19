@@ -25,6 +25,18 @@ namespace wiProfiler
 	// Renders a basic text of the Profiling results to the (x,y) screen coordinate
 	void DrawData(float x, float y, wiGraphics::CommandList cmd);
 
+#ifdef GGREDUCED
+	std::string GetProfilerData(void);
+	void CountPolygons(int iPoly);
+	void CountDrawCalls(void);
+	int GetPolygons(void);
+	int GetDrawCalls(void);
+	void CountDrawCallsShadows(void);
+	int GetDrawCallsShadows(void);
+	void CountDrawCallsTransparent(void);
+	int GetDrawCallsTransparent(void);
+#endif
+
 	// Enable/disable profiling
 	void SetEnabled(bool value);
 

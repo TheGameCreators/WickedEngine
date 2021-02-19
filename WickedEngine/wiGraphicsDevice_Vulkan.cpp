@@ -3126,6 +3126,43 @@ using namespace Vulkan_Internal;
 		return result;
 	}
 
+#ifdef GGREDUCED
+	void* GraphicsDevice_Vulkan::GetDeviceForIMGUI(void)
+	{
+		assert(0);
+		return NULL;
+	}
+	void* GraphicsDevice_Vulkan::GetBackBufferForGG(void)
+	{
+		return NULL;
+	}
+	void* GraphicsDevice_Vulkan::GetImmediateForIMGUI(void)
+	{
+		assert(0);
+		return NULL;
+	}
+	void* GraphicsDevice_Vulkan::GetDeviceContext(int cmd)
+	{
+		assert(0);
+		return NULL;
+	}
+	void GraphicsDevice_Vulkan::SetScissorArea(int cmd, const XMFLOAT4 area)
+	{
+		assert(0);
+	}
+	void GraphicsDevice_Vulkan::SetRenderTarget(CommandList cmd, void* renderView)
+	{
+		assert(0);
+	}
+
+	void* GraphicsDevice_Vulkan::MaterialGetSRV(void* resource)
+	{
+		assert(0);
+		return NULL;
+	}
+
+#endif
+
 	bool GraphicsDevice_Vulkan::CreateBuffer(const GPUBufferDesc *pDesc, const SubresourceData* pInitialData, GPUBuffer *pBuffer)
 	{
 		auto internal_state = std::make_shared<Buffer_Vulkan>();

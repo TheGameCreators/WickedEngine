@@ -106,6 +106,9 @@ void MainComponent::Initialize()
 
 	}
 
+#ifdef GGREDUCED
+	wiRenderer::SetRenderResolution(wiRenderer::GetDevice()->GetResolutionWidth(), wiRenderer::GetDevice()->GetResolutionHeight());
+#endif
 
 	wiInitializer::InitializeComponentsAsync();
 }
@@ -149,6 +152,7 @@ void MainComponent::Run()
 		return;
 	}
 
+#ifndef GGREDUCED
 	static bool startup_script = false;
 	if (!startup_script)
 	{
@@ -156,13 +160,19 @@ void MainComponent::Run()
 		wiLua::RegisterObject(MainComponent_BindLua::className, "main", new MainComponent_BindLua(this));
 		wiLua::RunFile("startup.lua");
 	}
+#endif
 
 	wiProfiler::BeginFrame();
 
 	deltaTime = float(std::max(0.0, timer.elapsed() / 1000.0));
 	timer.record();
 
+#ifdef GGREDUCED
+	//PE: We need to run always, as we can have many windows running at the same time.
+	if (1)
+#else
 	if (wiPlatform::IsWindowActive())
+#endif
 	{
 		// If the application is active, run Update loops:
 
@@ -231,8 +241,10 @@ void MainComponent::Update(float dt)
 		GetActivePath()->PreUpdate();
 	}
 
+#ifndef GGREDUCED
 	wiLua::SetDeltaTime(double(dt));
 	wiLua::Update();
+#endif
 
 	if (GetActivePath() != nullptr)
 	{
@@ -246,7 +258,9 @@ void MainComponent::Update(float dt)
 void MainComponent::FixedUpdate()
 {
 	wiBackLog::Update();
+#ifndef GGREDUCED
 	wiLua::FixedUpdate();
+#endif
 
 	if (GetActivePath() != nullptr)
 	{
@@ -258,7 +272,9 @@ void MainComponent::Render()
 {
 	auto range = wiProfiler::BeginRangeCPU("Render");
 
+#ifndef GGREDUCED
 	wiLua::Render();
+#endif
 
 	if (GetActivePath() != nullptr)
 	{

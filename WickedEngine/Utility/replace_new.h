@@ -5,6 +5,7 @@
 
 std::atomic<uint32_t> number_of_allocs{ 0 };
 
+#ifndef GGREDUCED
 void* operator new(std::size_t size) {
 	number_of_allocs.fetch_add(1);
 	void* p = malloc(size);
@@ -29,3 +30,4 @@ void operator delete(void* ptr) throw() { free(ptr); }
 void operator delete (void* ptr, const std::nothrow_t&) throw() { free(ptr); }
 void operator delete[](void* ptr) throw() { free(ptr); }
 void operator delete[](void* ptr, const std::nothrow_t&) throw() { free(ptr); }
+#endif

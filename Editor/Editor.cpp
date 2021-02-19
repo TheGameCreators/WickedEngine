@@ -53,6 +53,19 @@ using namespace wiRectPacker;
 using namespace wiScene;
 using namespace wiECS;
 
+#ifndef GGREDUCED
+// Just to allow editor to compile
+bool g_bNoSwapchainPresent = false;
+bool g_bNo2DRender = false;
+void ImGuiHook_RenderCall(void * aa)
+{
+}
+bool ImGuiHook_GetScissorArea(float * aaa, float * bbb, float * ccc, float * ddd)
+{
+	return false;
+}
+#endif
+
 void Editor::Initialize()
 {
 	MainComponent::Initialize();
@@ -750,6 +763,7 @@ void EditorComponent::Load()
 	scriptButton.SetColor(wiColor(255, 33, 140, 180), wiWidget::WIDGETSTATE::IDLE);
 	scriptButton.SetColor(wiColor(255, 100, 140, 255), wiWidget::WIDGETSTATE::FOCUS);
 	scriptButton.OnClick([&](wiEventArgs args) {
+#ifndef GGREDUCED
 		wiHelper::FileDialogParams params;
 		params.type = wiHelper::FileDialogParams::OPEN;
 		params.description = "Lua script";
@@ -759,6 +773,7 @@ void EditorComponent::Load()
 				wiLua::RunFile(fileName);
 			});
 		});
+#endif
 	});
 	GetGUI().AddWidget(&scriptButton);
 
@@ -870,9 +885,11 @@ void EditorComponent::Load()
 
 	physicsEnabledCheckBox.Create("Physics Simulation: ");
 	physicsEnabledCheckBox.SetTooltip("Toggle Physics Simulation On/Off");
+#ifndef GGREDUCED
 	physicsEnabledCheckBox.OnClick([&](wiEventArgs args) {
 		wiPhysicsEngine::SetSimulationEnabled(args.bValue);
 	});
+#endif
 	physicsEnabledCheckBox.SetCheck(wiPhysicsEngine::IsSimulationEnabled());
 	GetGUI().AddWidget(&physicsEnabledCheckBox);
 

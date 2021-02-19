@@ -159,7 +159,10 @@ public:
         P208 = 130,
         V208 = 131,
         V408 = 132,
-    };
+#ifdef GGREDUCED
+		R8G8B8_UNorm = 133,
+#endif
+	};
 
     enum class HeaderFlagBits : uint32_t {
         Height = 0x00000002,
@@ -415,6 +418,14 @@ DDSFile::DXGIFormat DDSFile::GetDXGIFormat(const PixelFormat& pf) {
                 }
                 break;
             case 24:
+#ifdef GGREDUCED
+				if (pf.m_RBitMask == 0x00ff0000 &&
+					pf.m_GBitMask == 0x0000ff00 &&
+					pf.m_BBitMask == 0x000000ff &&
+					pf.m_ABitMask == 0x00000000) {
+					return DXGIFormat::R8G8B8_UNorm;
+				}
+#endif
                 break;
             case 16:
                 if (pf.m_RBitMask == 0x7c00 && pf.m_GBitMask == 0x03e0 &&
@@ -623,7 +634,10 @@ uint32_t DDSFile::GetBitsPerPixel(DXGIFormat fmt) {
 
         case DXGIFormat::P010:
         case DXGIFormat::P016:
-            return 24;
+#ifdef GGREDUCED
+		case DXGIFormat::R8G8B8_UNorm:
+#endif
+			return 24;
 
         case DXGIFormat::R8G8_Typeless:
         case DXGIFormat::R8G8_UNorm:
