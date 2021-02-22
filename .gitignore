@@ -214,3 +214,4 @@ ModelManifest.xml
 
 # CMake build cache files
 .cache/
+WickedEngine/__pycache__/compile_shaders_hlsl6.cpython-36.pyc

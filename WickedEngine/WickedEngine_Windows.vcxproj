@@ -112,7 +112,7 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <FxCompile>
-      <ObjectFileOutput>shaders/%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput>$(GG_MAX_BUILD_PATH)/shaders/%(Filename).cso</ObjectFileOutput>
       <DisableOptimizations>false</DisableOptimizations>
       <EnableDebuggingInformation>false</EnableDebuggingInformation>
       <ShaderModel>5.0</ShaderModel>
@@ -150,7 +150,7 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <FxCompile>
-      <ObjectFileOutput>shaders/%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput>$(GG_MAX_BUILD_PATH)/shaders/%(Filename).cso</ObjectFileOutput>
       <DisableOptimizations>false</DisableOptimizations>
       <EnableDebuggingInformation>false</EnableDebuggingInformation>
       <ShaderModel>5.0</ShaderModel>
@@ -188,7 +188,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <FxCompile>
-      <ObjectFileOutput>shaders/%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput>$(GG_MAX_BUILD_PATH)/shaders/%(Filename).cso</ObjectFileOutput>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
     <Lib>
@@ -221,7 +221,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <FxCompile>
-      <ObjectFileOutput>shaders/%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput>$(GG_MAX_BUILD_PATH)/shaders/%(Filename).cso</ObjectFileOutput>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
     <Lib>
