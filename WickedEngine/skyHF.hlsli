@@ -159,10 +159,12 @@ void CalculateClouds(inout float3 sky, float3 V, bool dark_enabled)
     }
 
     // Trace a cloud layer plane:
-    const float3 o = g_xCamera_CamPos;
-    const float3 d = V;
-    const float3 planeOrigin = float3(0, 1000, 0);
-    const float3 planeNormal = float3(0, -1, 0);
+	//const float3 o = g_xCamera_CamPos;
+	const float3 o = g_xCamera_CamPos + float3(-25600, -4000, -25600); //PE: Center on map.
+	const float3 d = V;
+	//const float3 planeOrigin = float3(0, 1000, 0);
+	const float3 planeOrigin = float3(0, 0, 0); //PE: No need as we offset the camera.
+	const float3 planeNormal = float3(0, -1, 0);
     const float t = Trace_plane(o, d, planeOrigin, planeNormal);
 
     if (t < 0)
