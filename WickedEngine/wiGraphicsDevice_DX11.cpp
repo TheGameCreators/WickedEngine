@@ -3276,6 +3276,14 @@ void GraphicsDevice_DX11::CopyTexture2D_Region(const Texture* pDst, uint32_t dst
 	deviceContexts[cmd]->CopySubresourceRegion(internal_state_dst->resource.Get(), D3D11CalcSubresource(dstMip, 0, pDst->GetDesc().MipLevels), dstX, dstY, 0,
 		internal_state_src->resource.Get(), D3D11CalcSubresource(srcMip, 0, pSrc->GetDesc().MipLevels), nullptr);
 }
+
+void GraphicsDevice_DX11::MSAAResolve(const Texture* pDst, const Texture* pSrc, CommandList cmd)
+{
+	assert(pDst != nullptr && pSrc != nullptr);
+	auto internal_state_src = to_internal(pSrc);
+	auto internal_state_dst = to_internal(pDst);
+	deviceContexts[cmd]->ResolveSubresource(internal_state_dst->resource.Get(), 0, internal_state_src->resource.Get(), 0, _ConvertFormat(pDst->desc.Format));
+}
 #endif
 void GraphicsDevice_DX11::UpdateBuffer(const GPUBuffer* buffer, const void* data, CommandList cmd, int dataSize)
 {
