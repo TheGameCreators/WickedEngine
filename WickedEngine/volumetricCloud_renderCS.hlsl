@@ -57,7 +57,7 @@ static const float g_HorizonBlendPower = 2.0;
 static const float g_WeatherDensityAmount = 0.0; // Rain clouds disabled by default.
 
 // Modelling
-static const float g_CloudStartHeight = 1500.0;
+static const float g_CloudStartHeight = 3000.0;
 static const float g_CloudThickness = 4000.0;
 static const float g_SkewAlongWindDirection = 700.0;
 
