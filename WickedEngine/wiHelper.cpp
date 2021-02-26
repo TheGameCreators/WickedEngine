@@ -13,18 +13,23 @@
 #include <fstream>
 #include <sstream>
 #include <codecvt> // string conversion
+#include <filesystem>
 
 #ifdef _WIN32
 #include <direct.h>
 #ifdef PLATFORM_UWP
-#include <collection.h>
-#include <ppltasks.h>
+#include <winrt/Windows.UI.Popups.h>
+#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.Storage.Pickers.h>
+#include <winrt/Windows.Storage.AccessCache.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Foundation.Collections.h>
 #else
 #include <Commdlg.h> // openfile
 #include <WinBase.h>
 #endif // PLATFORM_UWP
 #else
-#include <filesystem>
 #include "Utility/portable-file-dialogs.h"
 #endif // _WIN32
 
@@ -48,14 +53,14 @@ namespace wiHelper
 	{
 #ifdef _WIN32
 #ifndef PLATFORM_UWP
-		MessageBoxA(wiPlatform::GetWindow(), msg.c_str(), caption.c_str(), 0);
+		MessageBoxA(GetActiveWindow(), msg.c_str(), caption.c_str(), 0);
 #else
 		wstring wmessage, wcaption;
 		StringConvert(msg, wmessage);
 		StringConvert(caption, wcaption);
 		// UWP can only show message box on main thread:
 		wiEvent::Subscribe_Once(SYSTEM_EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
-			Windows::UI::Popups::MessageDialog(ref new Platform::String(wmessage.c_str()), ref new Platform::String(wcaption.c_str())).ShowAsync();
+			winrt::Windows::UI::Popups::MessageDialog(wmessage, wcaption).ShowAsync();
 		});
 #endif // PLATFORM_UWP
 #elif SDL2
@@ -68,17 +73,17 @@ namespace wiHelper
 		std::string directory;
 		if (name.empty())
 		{
-			directory = GetOriginalWorkingDirectory() + "screenshots";
+			directory = "screenshots";
 		}
 		else
 		{
 			directory = GetDirectoryFromPath(name);
 		}
-#ifdef _WIN32
-		CreateDirectoryA(directory.c_str(), 0);
-#elif SDL2
-		std::filesystem::create_directory(directory.c_str());
-#endif // _WIN32
+
+		if (!std::filesystem::create_directory(directory.c_str()))
+		{
+			wiBackLog::post(("Directory couoldn't be created: " + directory).c_str());
+		}
 
 		std::string filename = name;
 		if (filename.empty())
@@ -256,45 +261,6 @@ namespace wiHelper
 		return ss.str();
 	}
 
-	string GetApplicationDirectory()
-	{
-#ifdef _WIN32
-		static std::string appDir;
-		if (appDir.empty())
-		{
-			CHAR fileName[1024] = {};
-			GetModuleFileNameA(NULL, fileName, arraysize(fileName));
-			appDir = GetDirectoryFromPath(fileName);
-		}
-#elif SDL2
-		static std::string appDir = std::string(SDL_GetBasePath());
-#else
-		static std::string appDir;
-#endif // _WIN32
-		return appDir;
-	}
-
-	string GetOriginalWorkingDirectory()
-	{
-#ifdef _WIN32
-		static std::string originalWorkingDir = std::string(_getcwd(NULL, 0)) + "/";
-#else
-		static std::string originalWorkingDir;
-#endif
-		return originalWorkingDir;
-	}
-
-	static std::string workingdir = GetOriginalWorkingDirectory();
-	string GetWorkingDirectory()
-	{
-		return workingdir;
-	}
-
-	void SetWorkingDirectory(const std::string& path)
-	{
-		workingdir = path;
-	}
-
 	void SplitPath(const std::string& fullPath, string& dir, string& fileName)
 	{
 		size_t found;
@@ -336,47 +302,23 @@ namespace wiHelper
 			std::string extension = filename.substr(idx + 1);
 			return extension;
 		}
-		
+
 		// No extension found
 		return "";
 	}
 
-	void RemoveExtensionFromFileName(std::string& filename)
+	void MakePathRelative(const std::string& rootdir, std::string& path)
 	{
-		string extension = GetExtensionFromFileName(filename);
-
-		if (!extension.empty())
+		if (rootdir.empty() || path.empty())
 		{
-			filename = filename.substr(0, filename.length() - extension.length() - 1);
-		}
-	}
-
-	std::string ExpandPath(const std::string& path)
-	{
-		std::string expanded = path;
-
-		// First make the path absolute if it's not (if it doesn't start with a drive letter):
-		if (expanded.find(":\\") == string::npos)
-		{
-			expanded = GetWorkingDirectory() + expanded;
+			return;
 		}
 
-		// Replace all slashes with backslashes:
-#ifdef PLATFORM_UWP
-		std::replace(expanded.begin(), expanded.end(), '/', '\\');
-#endif // PLATFORM_UWP
-
-		size_t pos;
-		while ((pos = expanded.find("..")) != string::npos)
+		size_t found = path.rfind(rootdir);
+		if (found != std::string::npos)
 		{
-			std::string parent = expanded.substr(0, pos - 1);
-			size_t pos2 = parent.find_last_of("\\");
-			parent = parent.substr(0, pos2);
-			std::string child = expanded.substr(pos + 2);
-			expanded = parent + child;
+			path = path.substr(found + rootdir.length());
 		}
-
-		return expanded;
 	}
 
 	bool FileRead(const std::string& fileName, std::vector<uint8_t>& data)
@@ -399,61 +341,57 @@ namespace wiHelper
 			return true;
 		}
 #else
-		using namespace concurrency;
-		using namespace Platform;
-		using namespace Windows::Storage;
-		using namespace Windows::Storage::Streams;
+		using namespace winrt::Windows::Storage;
+		using namespace winrt::Windows::Storage::Streams;
+		using namespace winrt::Windows::Foundation;
 		wstring wstr;
-		string filepath = ExpandPath(fileName);
-		StringConvert(filepath, wstr);
+		std::filesystem::path filepath = fileName;
+		filepath = std::filesystem::absolute(filepath);
+		StringConvert(filepath.string(), wstr);
 		bool success = false;
-		std::thread([&] {
-			bool end0 = false;
-			create_task(StorageFile::GetFileFromPathAsync(ref new String(wstr.c_str()))).then([&](task<StorageFile^> task) {
-				
-				StorageFile^ file;
-				try
-				{
-					file = task.get();
-				}
-				catch (Platform::AccessDeniedException^ e)
-				{
-					wiBackLog::post(("Opening file failed: " + fileName + "\nReason: Permission Denied!").c_str());
-					end0 = true;
-					return;
-				}
-				catch (...)
-				{
-					end0 = true;
-					return;
-				}
 
-				if (file)
+		auto async_helper = [&]() -> IAsyncAction {
+			try
+			{
+				auto file = co_await StorageFile::GetFileFromPathAsync(wstr);
+				auto buffer = co_await FileIO::ReadBufferAsync(file);
+				auto reader = DataReader::FromBuffer(buffer);
+				auto size = buffer.Length();
+				data.resize((size_t)size);
+				for (auto& x : data)
 				{
-					bool end1 = false;
-					create_task(FileIO::ReadBufferAsync(file)).then([&](IBuffer^ buffer) {
-						auto reader = DataReader::FromBuffer(buffer);
-						auto size = buffer->Length;
-						data.resize((size_t)size);
-						for (auto& x : data)
-						{
-							x = reader->ReadByte();
-						}
-						success = true;
-						end1 = true;
-						});
-					while (!end1) { Sleep(1); }
+					x = reader.ReadByte();
 				}
-				end0 = true;
-				});
-			while (!end0) { Sleep(1); }
+				success = true;
+			}
+			catch (winrt::hresult_error const& ex)
+			{
+				switch (ex.code())
+				{
+				case E_ACCESSDENIED:
+					wiBackLog::post(("Opening file failed: " + fileName + " | Reason: Permission Denied!").c_str());
+					break;
+				default:
+					break;
+				}
+			}
 
-		}).join();
+		};
+
+		if (winrt::impl::is_sta_thread())
+		{
+			std::thread([&] { async_helper().get(); }).join(); // can't block coroutine from ui thread
+		}
+		else
+		{
+			async_helper().get();
+		}
 
 		if (success)
 		{
 			return true;
 		}
+
 #endif // PLATFORM_UWP
 
 		wiBackLog::post(("File not found: " + fileName).c_str());
@@ -476,14 +414,14 @@ namespace wiHelper
 			return true;
 		}
 #else
-		using namespace concurrency;
-		using namespace Platform;
-		using namespace Windows::Storage;
-		using namespace Windows::Storage::Streams;
-		using namespace Windows::Security::Cryptography;
+
+		using namespace winrt::Windows::Storage;
+		using namespace winrt::Windows::Storage::Streams;
+		using namespace winrt::Windows::Foundation;
 		wstring wstr;
-		string filepath = ExpandPath(fileName);
-		StringConvert(filepath, wstr);
+		std::filesystem::path filepath = fileName;
+		filepath = std::filesystem::absolute(filepath);
+		StringConvert(filepath.string(), wstr);
 
 		CREATEFILE2_EXTENDED_PARAMETERS params = {};
 		params.dwSize = (DWORD)size;
@@ -493,22 +431,36 @@ namespace wiHelper
 		CloseHandle(filehandle);
 
 		bool success = false;
-		std::thread([&] {
-			bool end0 = false;
-			create_task(StorageFile::GetFileFromPathAsync(ref new String(wstr.c_str()))).then([&](StorageFile^ file) {
-				if (file)
+		auto async_helper = [&]() -> IAsyncAction {
+			try
+			{
+				auto file = co_await StorageFile::GetFileFromPathAsync(wstr);
+				winrt::array_view<const uint8_t> dataarray(data, (winrt::array_view<const uint8_t>::size_type)size);
+				co_await FileIO::WriteBytesAsync(file, dataarray);
+				success = true;
+			}
+			catch (winrt::hresult_error const& ex)
+			{
+				switch (ex.code())
 				{
-					bool end1 = false;
-					create_task(FileIO::WriteBytesAsync(file, ref new Platform::Array<unsigned char>((unsigned char*)data, (unsigned int)size))).then([&]() {
-						success = true;
-						end1 = true;
-						});
-					while (!end1) { Sleep(1); }
+				case E_ACCESSDENIED:
+					wiBackLog::post(("Opening file failed: " + fileName + " | Reason: Permission Denied!").c_str());
+					break;
+				default:
+					break;
 				}
-				end0 = true;
-				});
-			while (!end0) { Sleep(1); }
-		}).join();
+			}
+
+		};
+
+		if (winrt::impl::is_sta_thread())
+		{
+			std::thread([&] { async_helper().get(); }).join(); // can't block coroutine from ui thread
+		}
+		else
+		{
+			async_helper().get();
+		}
 
 		if (success)
 		{
@@ -527,49 +479,47 @@ namespace wiHelper
 		file.close();
 		return exists;
 #else
-		using namespace concurrency;
-		using namespace Platform;
-		using namespace Windows::Storage;
-		using namespace Windows::Storage::Streams;
-		string filepath = ExpandPath(fileName);
-		string directory, name;
-		SplitPath(filepath, directory, name);
+		using namespace winrt::Windows::Storage;
+		using namespace winrt::Windows::Foundation;
+		string directory = GetDirectoryFromPath(fileName);
+		string name = GetFileNameFromPath(fileName);
 		wstring wdir, wname;
 		StringConvert(directory, wdir);
 		StringConvert(name, wname);
 		bool success = false;
-		std::thread([&] {
-			bool end0 = false;
-			create_task(StorageFolder::GetFolderFromPathAsync(ref new String(wdir.c_str()))).then([&](task<StorageFolder^> task) {
 
-				StorageFolder^ folder;
-				try
+		auto async_helper = [&]() -> IAsyncAction {
+			try
+			{
+				auto folder = co_await StorageFolder::GetFolderFromPathAsync(wdir);
+				auto item = co_await folder.TryGetItemAsync(wname);
+				if (item)
 				{
-					folder = task.get();
+					success = true;
 				}
-				catch (Platform::AccessDeniedException^ e)
+			}
+			catch (winrt::hresult_error const& ex)
+			{
+				switch (ex.code())
 				{
-					wiBackLog::post(("Opening file failed: " + fileName + "\nReason: Permission Denied!").c_str());
-					end0 = true;
-					return;
+				case E_ACCESSDENIED:
+					wiBackLog::post(("Opening file failed: " + fileName + " | Reason: Permission Denied!").c_str());
+					break;
+				default:
+					break;
 				}
+			}
 
-				if (folder)
-				{
-					bool end1 = false;
-					create_task(folder->TryGetItemAsync(ref new String(wname.c_str()))).then([&](IStorageItem^ item) {
-						if (item)
-						{
-							success = true;
-						}
-						end1 = true;
-					});
-					while (!end1) { Sleep(1); }
-				}
-				end0 = true;
-			});
-			while (!end0) { Sleep(1); }
-		}).join();
+		};
+
+		if (winrt::impl::is_sta_thread())
+		{
+			std::thread([&] { async_helper().get(); }).join(); // can't block coroutine from ui thread
+		}
+		else
+		{
+			async_helper().get();
+		}
 
 		return success;
 #endif
@@ -633,10 +583,12 @@ namespace wiHelper
 			{
 			case FileDialogParams::OPEN:
 				ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+				ofn.Flags |= OFN_NOCHANGEDIR;
 				ok = GetOpenFileNameA(&ofn) == TRUE;
 				break;
 			case FileDialogParams::SAVE:
 				ofn.Flags = OFN_OVERWRITEPROMPT;
+				ofn.Flags |= OFN_NOCHANGEDIR;
 				ok = GetSaveFileNameA(&ofn) == TRUE;
 				break;
 			}
@@ -649,117 +601,77 @@ namespace wiHelper
 			}).detach();
 
 #else
+		auto filedialoghelper = [](FileDialogParams params, std::function<void(std::string fileName)> onSuccess) -> winrt::fire_and_forget {
 
-		using namespace concurrency;
-		using namespace Platform;
-		using namespace Windows::Storage;
-		using namespace Windows::Storage::Pickers;
-		using namespace Windows::Storage::AccessCache;
+			using namespace winrt::Windows::Storage;
+			using namespace winrt::Windows::Storage::Pickers;
+			using namespace winrt::Windows::Storage::AccessCache;
 
-		switch (params.type)
-		{
-		case FileDialogParams::OPEN:
-		{
-			FileOpenPicker^ picker = ref new FileOpenPicker();
-			picker->ViewMode = PickerViewMode::List;
-			picker->SuggestedStartLocation = PickerLocationId::Objects3D;
-
-			for (auto& x : params.extensions)
+			switch (params.type)
 			{
-				wstring wstr;
-				StringConvert(x, wstr);
-				wstr = L"." + wstr;
-				picker->FileTypeFilter->Append(ref new String(wstr.c_str()));
-			}
+			default:
+			case FileDialogParams::OPEN:
+			{
+				FileOpenPicker picker;
+				picker.ViewMode(PickerViewMode::List);
+				picker.SuggestedStartLocation(PickerLocationId::Objects3D);
 
-			create_task(picker->PickSingleFileAsync()).then([=](StorageFile^ file) {
+				for (auto& x : params.extensions)
+				{
+					wstring wstr;
+					StringConvert(x, wstr);
+					wstr = L"." + wstr;
+					picker.FileTypeFilter().Append(wstr);
+				}
+
+				auto file = co_await picker.PickSingleFileAsync();
+
 				if (file)
 				{
-					auto futureaccess = StorageApplicationPermissions::FutureAccessList;
-					futureaccess->Clear();
-					futureaccess->Add(file);
-					wstring wstr = file->Path->Data();
+					auto futureaccess = StorageApplicationPermissions::FutureAccessList();
+					futureaccess.Clear();
+					futureaccess.Add(file);
+					wstring wstr = file.Path().data();
 					string str;
 					StringConvert(wstr, str);
 
-					// The desktop file picker also modifies the working directory:
-					SetWorkingDirectory(GetDirectoryFromPath(str));
-
-					// Need to verify that parent folder is accessible:
-					create_task(file->GetParentAsync()).then([=](StorageFolder^ folder) {
-						if (folder)
-						{
-							onSuccess(str);
-						}
-						else
-						{
-							// Folder not accessible:
-							using namespace Windows::UI::Popups;
-							auto msg = ref new MessageDialog(
-								ref new Platform::String(L"No permission to folder!\nPlease pick the current folder to receive permission!\nOtherwise, some files might fail to load."),
-								ref new Platform::String(L"Warning!")
-							);
-							create_task(msg->ShowAsync()).then([=](IUICommand^ cmd) {
-
-								FolderPicker^ folderpicker = ref new FolderPicker();
-								folderpicker->ViewMode = PickerViewMode::List;
-								folderpicker->SuggestedStartLocation = PickerLocationId::ComputerFolder;
-
-								for (auto& x : params.extensions)
-								{
-									wstring wstr;
-									StringConvert(x, wstr);
-									wstr = L"." + wstr;
-									folderpicker->FileTypeFilter->Append(ref new String(wstr.c_str()));
-								}
-
-								create_task(folderpicker->PickSingleFolderAsync()).then([=](StorageFolder^ folder) {
-									if (folder)
-									{
-										futureaccess->Add(folder);
-										onSuccess(str);
-									}
-								});
-							});
-						}
-					});
+					onSuccess(str);
 				}
-			});
-		}
-		break;
-
-		case FileDialogParams::SAVE:
-		{
-			FileSavePicker^ picker = ref new FileSavePicker();
-			picker->SuggestedStartLocation = PickerLocationId::Objects3D;
-
-			for (auto& x : params.extensions)
-			{
-				wstring wstr;
-				StringConvert(x, wstr);
-				wstr = L"." + wstr;
-				auto plainTextExtensions = ref new Platform::Collections::Vector<String^>();
-				plainTextExtensions->Append(ref new String(wstr.c_str()));
-				StringConvert(params.description, wstr);
-				picker->FileTypeChoices->Insert(ref new String(wstr.c_str()), plainTextExtensions);
 			}
+			break;
+			case FileDialogParams::SAVE:
+			{
+				FileSavePicker picker;
+				picker.SuggestedStartLocation(PickerLocationId::Objects3D);
 
-			create_task(picker->PickSaveFileAsync()).then([=](StorageFile^ file) {
+				wstring wdesc;
+				StringConvert(params.description, wdesc);
+				winrt::Windows::Foundation::Collections::IVector<winrt::hstring> extensions{ winrt::single_threaded_vector<winrt::hstring>() };
+				for (auto& x : params.extensions)
+				{
+					wstring wstr;
+					StringConvert(x, wstr);
+					wstr = L"." + wstr;
+					extensions.Append(wstr);
+				}
+				picker.FileTypeChoices().Insert(wdesc, extensions);
 
+				auto file = co_await picker.PickSaveFileAsync();
 				if (file)
 				{
-					auto futureaccess = StorageApplicationPermissions::FutureAccessList;
-					futureaccess->Clear();
-					futureaccess->Add(file);
-					wstring wstr = file->Path->Data();
+					auto futureaccess = StorageApplicationPermissions::FutureAccessList();
+					futureaccess.Clear();
+					futureaccess.Add(file);
+					wstring wstr = file.Path().data();
 					string str;
 					StringConvert(wstr, str);
 					onSuccess(str);
 				}
-			});
-		}
-		break;
-		}
+			}
+			break;
+			}
+		};
+		filedialoghelper(params, onSuccess);
 
 #endif // PLATFORM_UWP
 
@@ -783,7 +695,7 @@ namespace wiHelper
 			case FileDialogParams::OPEN: {
 				std::vector<std::string> selection = pfd::open_file(
 						params.description,
-						wiHelper::GetOriginalWorkingDirectory(),
+						std::filesystem::current_path().string(),
 						extensions
 						// allow multi selection here
 				).result();
@@ -797,7 +709,7 @@ namespace wiHelper
 			}
 			case FileDialogParams::SAVE: {
 				std::string destination = pfd::save_file(params.description,
-						wiHelper::GetOriginalWorkingDirectory(),
+						std::filesystem::current_path().string(),
 						extensions
 						// remove overwrite warning here
 				).result();

@@ -128,6 +128,13 @@ void PaintToolWindow::Create(EditorComponent* editor)
 	wireCheckBox.SetCheck(true);
 	AddWidget(&wireCheckBox);
 
+	pressureCheckBox.Create("Pressure: ");
+	pressureCheckBox.SetTooltip("Set whether to use pressure sensitivity (for example pen tablet)");
+	pressureCheckBox.SetSize(XMFLOAT2(hei, hei));
+	pressureCheckBox.SetPos(XMFLOAT2(x + 200, y));
+	pressureCheckBox.SetCheck(false);
+	AddWidget(&pressureCheckBox);
+
 	textureSlotComboBox.Create("Texture Slot: ");
 	textureSlotComboBox.SetTooltip("Choose texture slot of the selected material to paint (texture paint mode only)");
 	textureSlotComboBox.SetPos(XMFLOAT2(x, y += step));
@@ -175,14 +182,21 @@ void PaintToolWindow::Create(EditorComponent* editor)
 		uint64_t sel = textureSlotComboBox.GetItemUserData(textureSlotComboBox.GetSelected());
 		slotname = &material->textures[sel].name;
 
-		wiHelper::RemoveExtensionFromFileName(*slotname);
-		*slotname = *slotname + "_0.png";
-		std::string filename = wiHelper::GetWorkingDirectory() + *slotname;
+		wiHelper::FileDialogParams params;
+		params.type = wiHelper::FileDialogParams::SAVE;
+		params.description = "Image";
+		params.extensions.push_back("png");
+		wiHelper::FileDialog(params, [=](std::string fileName) {
 
-		if (!wiHelper::saveTextureToFile(*resource->texture, filename))
-		{
-			wiHelper::messageBox("Saving texture failed! Check filename of texture slot in the material!");
-		}
+			*slotname = fileName;
+			wiHelper::MakePathRelative(wiHelper::GetDirectoryFromPath(fileName), *slotname);
+
+			if (!wiHelper::saveTextureToFile(*resource->texture, fileName))
+			{
+				wiHelper::messageBox("Saving texture failed! :(");
+			}
+		});
+
 	});
 	AddWidget(&saveTextureButton);
 
@@ -218,6 +232,7 @@ void PaintToolWindow::Update(float dt)
 	auto pointer = wiInput::GetPointer();
 	posNew = XMFLOAT2(pointer.x, pointer.y);
 	stroke_dist += wiMath::Distance(pos, posNew);
+	const float pressure = pressureCheckBox.GetCheck() ? pointer.w : 1.0f;
 
 	const float spacing = spacingSlider.GetValue();
 	const bool pointer_moved = stroke_dist >= spacing;
@@ -232,6 +247,7 @@ void PaintToolWindow::Update(float dt)
 
 	const MODE mode = GetMode();
 	const float radius = radiusSlider.GetValue();
+	const float pressure_radius = radius * pressure;
 	const float amount = amountSlider.GetValue();
 	const float falloff = falloffSlider.GetValue();
 	const wiColor color = colorPicker.GetPickColor();
@@ -316,7 +332,7 @@ void PaintToolWindow::Update(float dt)
 
 			PaintTextureCB cb;
 			cb.xPaintBrushCenter = center;
-			cb.xPaintBrushRadius = (uint32_t)radius;
+			cb.xPaintBrushRadius = (uint32_t)pressure_radius;
 			cb.xPaintBrushAmount = amount;
 			cb.xPaintBrushFalloff = falloff;
 			cb.xPaintBrushColor = color.rgba;
@@ -453,11 +469,11 @@ void PaintToolWindow::Update(float dt)
 
 				const float z = XMVectorGetZ(P);
 				const float dist = XMVectorGetX(XMVector2Length(C - P));
-				if (z >= 0 && z <= 1 && dist <= radius)
+				if (z >= 0 && z <= 1 && dist <= pressure_radius)
 				{
 					RecordHistory(true);
 					rebuild = true;
-					const float affection = amount * std::pow(1.0f - (dist / radius), falloff);
+					const float affection = amount * std::pow(1.0f - (dist / pressure_radius), falloff);
 
 					switch (mode)
 					{
@@ -581,10 +597,10 @@ void PaintToolWindow::Update(float dt)
 
 				const float z = XMVectorGetZ(P);
 				const float dist = XMVectorGetX(XMVector2Length(C - P));
-				if (z >= 0 && z <= 1 && dist <= radius)
+				if (z >= 0 && z <= 1 && dist <= pressure_radius)
 				{
 					averageNormal += N;
-					const float affection = amount * std::pow(1.0f - (dist / radius), falloff);
+					const float affection = amount * std::pow(1.0f - (dist / pressure_radius), falloff);
 					paintindices.push_back({ j, affection });
 				}
 			}
@@ -671,7 +687,7 @@ void PaintToolWindow::Update(float dt)
 				P = P * MUL + ADD;
 				P = P * SCREEN;
 				const float z = XMVectorGetZ(P);
-				if (z >= 0 && z <= 1 && XMVectorGetX(XMVector2Length(C - P)) <= radius)
+				if (z >= 0 && z <= 1 && XMVectorGetX(XMVector2Length(C - P)) <= pressure_radius)
 				{
 					RecordHistory(true);
 					softbody->weights[j] = (mode == MODE_SOFTBODY_PINNING ? 0.0f : 1.0f);
@@ -778,7 +794,7 @@ void PaintToolWindow::Update(float dt)
 
 				const float z = XMVectorGetZ(P);
 				const float dist = XMVectorGetX(XMVector2Length(C - P));
-				if (z >= 0 && z <= 1 && dist <= radius)
+				if (z >= 0 && z <= 1 && dist <= pressure_radius)
 				{
 					RecordHistory(true);
 					switch (mode)
@@ -792,7 +808,7 @@ void PaintToolWindow::Update(float dt)
 					case MODE_HAIRPARTICLE_LENGTH:
 						if (hair->vertex_lengths[j] > 0) // don't change distribution
 						{
-							const float affection = amount * std::pow(1.0f - (dist / radius), falloff);
+							const float affection = amount * std::pow(1.0f - (dist / pressure_radius), falloff);
 							hair->vertex_lengths[j] = wiMath::Lerp(hair->vertex_lengths[j], color_float.w, affection);
 							// don't let it "remove" the vertex by keeping its length above zero:
 							//	(because if removed, distribution also changes which might be distracting)

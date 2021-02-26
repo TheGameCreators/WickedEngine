@@ -215,3 +215,8 @@ ModelManifest.xml
 # CMake build cache files
 .cache/
 WickedEngine/__pycache__/compile_shaders_hlsl6.cpython-36.pyc
+
+# WINRT Generated files
+/Editor/Generated Files/winrt
+/Template_UWP/Generated Files/winrt
+/WickedEngine/Generated Files/winrt
