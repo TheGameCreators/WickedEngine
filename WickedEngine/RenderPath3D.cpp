@@ -892,9 +892,10 @@ void RenderPath3D::Render() const
 		wiProfiler::EndRange(range); // Opaque Scene
 
 		RenderOutline(cmd);
+
 #ifdef GGREDUCED
-		//void Wicked_Render_Opaque_Scene(CommandList cmd);
-		//Wicked_Render_Opaque_Scene(cmd);
+		void Wicked_Render_Opaque_Scene(CommandList cmd);
+		Wicked_Render_Opaque_Scene(cmd);
 #endif
 
 		// Upsample + Blend the volumetric clouds on top:
