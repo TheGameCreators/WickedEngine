@@ -328,7 +328,11 @@ namespace wiScene
 	{
 		for (auto& x : textures)
 		{
+#ifdef GGREDUCED
+			if (!x.name.empty() && !x.resource)
+#else
 			if (!x.name.empty())
+#endif
 			{
 				x.resource = wiResourceManager::Load(content_dir + x.name);
 			}
