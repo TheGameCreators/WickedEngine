@@ -158,6 +158,9 @@ public:
 	virtual void RenderSceneMIPChain(wiGraphics::CommandList cmd) const;
 	virtual void RenderTransparents(wiGraphics::CommandList cmd) const;
 	virtual void RenderPostprocessChain(wiGraphics::CommandList cmd) const;
+#ifdef GGREDUCED
+	virtual void RenderOutlineHighlighers(wiGraphics::CommandList cmd) const;
+#endif
 
 	void ResizeBuffers() override;
 

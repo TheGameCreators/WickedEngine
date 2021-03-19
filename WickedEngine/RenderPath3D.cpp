@@ -947,6 +947,11 @@ void RenderPath3D::Render() const
 		RenderTransparents(cmd);
 
 		RenderPostprocessChain(cmd);
+
+#ifdef GGREDUCED
+		RenderOutlineHighlighers(cmd);
+#endif
+
 		});
 
 	RenderPath2D::Render();
@@ -1205,6 +1210,12 @@ void RenderPath3D::RenderSceneMIPChain(CommandList cmd) const
 	device->EventEnd(cmd);
 	wiProfiler::EndRange(range);
 }
+#ifdef GGREDUCED
+void RenderPath3D::RenderOutlineHighlighers(wiGraphics::CommandList cmd) const
+{
+	GraphicsDevice* device = wiRenderer::GetDevice();
+}
+#endif
 void RenderPath3D::RenderTransparents(CommandList cmd) const
 {
 	GraphicsDevice* device = wiRenderer::GetDevice();
