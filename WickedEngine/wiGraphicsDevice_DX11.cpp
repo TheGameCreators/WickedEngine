@@ -1624,7 +1624,7 @@ void* GraphicsDevice_DX11::MaterialGetSRV(void* resource)
 		//PE: Will check if i get the same.
 		// leelee, debug crashes here for some reason - how can this be null (or 0xddddddddddddddd)
 		ID3D11ShaderResourceView* pSRVPtr = internal_state->srv.Get();
-		if (internal_state->srv == NULL || pSRVPtr == NULL || pSRVPtr == (ID3D11ShaderResourceView*)0xdddddddddddddddd)
+		if (internal_state->srv == NULL || pSRVPtr == NULL || pSRVPtr == (ID3D11ShaderResourceView*)0xdddddddddddddddd || pSRVPtr == (ID3D11ShaderResourceView*)1)
 			return NULL;
 
 		SRV = internal_state->srv.Get();
