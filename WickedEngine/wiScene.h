@@ -1118,6 +1118,9 @@ namespace wiScene
 		float fogStart = 100;
 		float fogEnd = 1000;
 		float fogHeight = 0;
+//#ifdef GGREDUCED - must have this without depending on GGREDUCED
+		XMFLOAT4 fogColorAndOpacity = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+//#endif
 		float cloudiness = 0.0f;
 		float cloudScale = 0.0003f;
 		float cloudSpeed = 0.1f;

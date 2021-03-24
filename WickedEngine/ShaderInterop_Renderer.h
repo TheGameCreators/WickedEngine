@@ -278,6 +278,12 @@ CBUFFER(FrameCB, CBSLOT_RENDERER_FRAME)
 	float3		g_xFrame_Fog;								// Fog Start,End,Height
 	float		g_xFrame_VoxelRadianceMaxDistance;			// maximum raymarch distance for voxel GI in world-space
 
+//#ifdef GGREDUCED
+//	float4		g_xFrame_FogColorAndOpacity;				// Override fog color and influence over existing system (Opacity) - issue with shader vs C++?!?
+	float3		g_xFrame_FogColor;
+	float		g_xFrame_FogOpacity;
+//#endif
+
 	float		g_xFrame_VoxelRadianceDataSize;				// voxel half-extent in world space units
 	float		g_xFrame_VoxelRadianceDataSize_rcp;			// 1.0 / voxel-half extent
 	uint		g_xFrame_VoxelRadianceDataRes;				// voxel grid resolution
