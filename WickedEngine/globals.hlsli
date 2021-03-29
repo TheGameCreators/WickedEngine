@@ -72,6 +72,17 @@ inline float GetFogAmount(float dist)
 	return saturate((dist - g_xFrame_Fog.x) / (g_xFrame_Fog.y - g_xFrame_Fog.x));
 }
 
+//#ifdef GGREDUCED
+inline float3 GetFogColor(void)
+{
+	return g_xFrame_FogColor.xyz;
+}
+inline float GetFogOpacity(void)
+{
+	return g_xFrame_FogOpacity;
+}
+//#endif
+
 float3 tonemap(float3 x)
 {
 	return x / (x + 1); // Reinhard tonemap

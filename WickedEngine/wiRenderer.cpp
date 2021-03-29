@@ -3618,6 +3618,11 @@ void UpdatePerFrameData(
 	frameCB.g_xFrame_CloudScale = vis.scene->weather.cloudScale;
 	frameCB.g_xFrame_CloudSpeed = vis.scene->weather.cloudSpeed;
 	frameCB.g_xFrame_Fog = float3(vis.scene->weather.fogStart, vis.scene->weather.fogEnd, vis.scene->weather.fogHeight);
+//#ifdef GGREDUCED
+	frameCB.g_xFrame_FogColor = float3(vis.scene->weather.fogColorAndOpacity.x, vis.scene->weather.fogColorAndOpacity.y, vis.scene->weather.fogColorAndOpacity.z);
+	frameCB.g_xFrame_FogOpacity = vis.scene->weather.fogColorAndOpacity.w;
+//	frameCB.g_xFrame_FogColorAndOpacity = vis.scene->weather.fogColorAndOpacity;
+//#endif
 	frameCB.g_xFrame_Horizon = vis.scene->weather.horizon;
 	frameCB.g_xFrame_Zenith = vis.scene->weather.zenith;
 	frameCB.g_xFrame_VoxelRadianceMaxDistance = voxelSceneData.maxDistance;

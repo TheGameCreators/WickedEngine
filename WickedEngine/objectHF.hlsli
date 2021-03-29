@@ -874,15 +874,31 @@ inline void ApplyLighting(in Surface surface, in Lighting lighting, inout float4
 
 inline void ApplyFog(in float dist, inout float4 color)
 {
+//#ifdef GGREDUCED
+	const float3 FogColor = GetFogColor();
+	const float FogOpacity = GetFogOpacity();
+//#endif
+
 	if (g_xFrame_Options & OPTION_BIT_REALISTIC_SKY)
 	{
 		const float3 skyLuminance = texture_skyluminancelut.SampleLevel(sampler_point_clamp, float2(0.5, 0.5), 0).rgb;
-		color.rgb = lerp(color.rgb, skyLuminance, GetFogAmount(dist));
+//#ifdef GGREDUCED
+		const float3 finalFogColor = lerp(skyLuminance, FogColor, FogOpacity);
+		color.rgb = lerp(color.rgb, finalFogColor, GetFogAmount(dist));
+//#else
+//		color.rgb = lerp(color.rgb, skyLuminance, GetFogAmount(dist));
+//#endif
 	}
 	else
 	{
 		const float3 V = float3(0.0, -1.0, 0.0);
-		color.rgb = lerp(color.rgb, GetDynamicSkyColor(V, false, false, false, true), GetFogAmount(dist));
+//#ifdef GGREDUCED
+		const float3 skyDynamicCol = GetDynamicSkyColor(V, false, false, false, true);
+		const float3 finalFogColor = lerp(skyDynamicCol, FogColor, FogOpacity);
+		color.rgb = lerp(color.rgb, finalFogColor, GetFogAmount(dist));
+//#else
+//		color.rgb = lerp(color.rgb, GetDynamicSkyColor(V, false, false, false, true), GetFogAmount(dist));
+//#endif
 	}
 }
 
