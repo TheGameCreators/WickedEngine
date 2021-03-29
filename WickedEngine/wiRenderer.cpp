@@ -5358,7 +5358,16 @@ void DrawScene(
 	}
 	if (!renderQueue.empty())
 	{
+
+#ifdef GGREDUCED
+		//PE: renderQueue.sort is not using distance but meshIndex<<8 , dist&0xff, so order of transparent mesh'es was not correct.
+		if (transparent)
+			renderQueue.sortdistance(RenderQueue::SORT_BACK_TO_FRONT);
+		else
+			renderQueue.sort(RenderQueue::SORT_FRONT_TO_BACK);
+#else
 		renderQueue.sort(transparent ? RenderQueue::SORT_BACK_TO_FRONT : RenderQueue::SORT_FRONT_TO_BACK);
+#endif
 		RenderMeshes(vis, renderQueue, renderPass, renderTypeFlags, cmd, tessellation);
 
 		GetRenderFrameAllocator(cmd).free(sizeof(RenderBatch) * renderQueue.batchCount);
@@ -5368,12 +5377,6 @@ void DrawScene(
 	device->EventEnd(cmd);
 
 }
-
-#ifdef GGREDUCED
-//LEELEE: There is new draw transparent any more!
-//PE: renderQueue.sort is not using distance but meshIndex<<8 , dist&0xff, so order of transparent mesh'es was not correct.
-//renderQueue.sortdistance(RenderQueue::SORT_BACK_TO_FRONT);
-#endif
 
 
 void DrawDebugWorld(
