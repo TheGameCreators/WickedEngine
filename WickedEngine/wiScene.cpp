@@ -1909,15 +1909,15 @@ namespace wiScene
 		{
 			AnimationComponent& animation = animations[i];
 
-#ifdef GGREDUCED
+			#ifdef GGREDUCED
 			if ((!animation.IsPlaying() && animation.timer == 0.0f) && animation.updateonce == false) continue;
 			animation.updateonce = false;
-#else
+			#else
 			if (!animation.IsPlaying() && animation.timer == 0.0f)
 			{
 				continue;
 			}
-#endif
+			#endif
 
 			for (const AnimationComponent::AnimationChannel& channel : animation.channels)
 			{
@@ -2271,7 +2271,12 @@ namespace wiScene
 
 			if (animation.IsLooped() && animation.timer > animation.end)
 			{
+				#ifdef GGREDUCED
+				float fLengthOfAnimInTime = animation.end - animation.start;
+				animation.timer -= fLengthOfAnimInTime;
+				#else
 				animation.timer = animation.start;
+				#endif
 			}
 		}
 	}
