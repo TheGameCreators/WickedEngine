@@ -884,6 +884,7 @@ void RenderPath3D::Render() const
 
 		device->BindResource(PS, &tiledLightResources.entityTiles_Opaque, TEXSLOT_RENDERPATH_ENTITYTILES, cmd);
 		device->BindResource(PS, getReflectionsEnabled() ? &rtReflection : wiTextureHelper::getTransparent(), TEXSLOT_RENDERPATH_REFLECTION, cmd);
+		//PE: Below line often crash here at startup ?.
 		device->BindResource(PS, getAOEnabled() ? &rtAO : wiTextureHelper::getWhite(), TEXSLOT_RENDERPATH_AO, cmd);
 		device->BindResource(PS, getSSREnabled() || getRaytracedReflectionEnabled() ? &rtSSR : wiTextureHelper::getTransparent(), TEXSLOT_RENDERPATH_SSR, cmd);
 		wiRenderer::DrawScene(visibility_main, RENDERPASS_MAIN, cmd, drawscene_flags);
@@ -892,11 +893,6 @@ void RenderPath3D::Render() const
 		wiProfiler::EndRange(range); // Opaque Scene
 
 		RenderOutline(cmd);
-
-#ifdef GGREDUCED
-		void Wicked_Render_Opaque_Scene(CommandList cmd);
-		Wicked_Render_Opaque_Scene(cmd);
-#endif
 
 		// Upsample + Blend the volumetric clouds on top:
 		if (getVolumetricCloudsEnabled())

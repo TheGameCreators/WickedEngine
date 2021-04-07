@@ -331,6 +331,10 @@ void RenderPath2D::Compose(CommandList cmd) const
 	wiImage::Draw(&rtFinal, fx, cmd);
 
 #ifdef GGREDUCED
+
+	void Wicked_Render_Opaque_Scene(CommandList cmd);
+	Wicked_Render_Opaque_Scene(cmd);
+
 	// hook back to main app to allow it to render IMGUI IDE
 	GraphicsDevice* device = wiRenderer::GetDevice();
 	ImGuiHook_RenderCall((void*)device->GetDeviceContext(cmd));
