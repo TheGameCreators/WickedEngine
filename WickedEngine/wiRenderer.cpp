@@ -1338,11 +1338,13 @@ void LoadShaders()
 							case BLENDMODE_OPAQUE:
 								desc.bs = &blendStates[BSTYPE_OPAQUE];
 								break;
-#ifdef GGREDUCED
-							case BLENDMODE_HAIR:
-								desc.bs = &blendStates[BSTYPE_TRANSPARENT];
-								break;
-#endif
+
+//LB: Not playing nicely with renders!								
+//#ifdef GGREDUCED
+//							case BLENDMODE_HAIR:
+//								desc.bs = &blendStates[BSTYPE_TRANSPARENT];
+//								break;
+//#endif
 							case BLENDMODE_ALPHA:
 								desc.bs = &blendStates[BSTYPE_TRANSPARENT];
 								break;
@@ -1374,7 +1376,7 @@ void LoadShaders()
 								desc.dss = &depthStencils[transparency ? DSSTYPE_DEPTHREAD : DSSTYPE_SHADOW];
 								break;
 							case RENDERPASS_MAIN:
-								if (blendMode == BLENDMODE_ADDITIVE || blendMode == BLENDMODE_HAIR)
+								if (blendMode == BLENDMODE_ADDITIVE )//|| blendMode == BLENDMODE_HAIR)
 								{
 									desc.dss = &depthStencils[DSSTYPE_DEPTHREAD];
 								}
@@ -1390,7 +1392,7 @@ void LoadShaders()
 								desc.dss = &depthStencils[DSSTYPE_XRAY];
 								break;
 							default:
-								if (blendMode == BLENDMODE_ADDITIVE || blendMode == BLENDMODE_HAIR)
+								if (blendMode == BLENDMODE_ADDITIVE )// || blendMode == BLENDMODE_HAIR)
 								{
 									desc.dss = &depthStencils[DSSTYPE_DEPTHREAD];
 								}
@@ -2965,7 +2967,9 @@ void RenderMeshes(
 #ifdef GGREDUCED
 						// if mesh is double sided, probably hair or leaves, so ensure NO DEPTH WRITE happens to mess up coverage!!
 						BLENDMODE blendMode = material.GetBlendMode();
-						if (mesh.IsDoubleSided()) blendMode = BLENDMODE_HAIR;
+
+						// LB: Hair solution not playing nicely with other objects
+						//if (mesh.IsDoubleSided()) blendMode = BLENDMODE_HAIR;
 #else
 						const BLENDMODE blendMode = material.GetBlendMode();
 #endif
@@ -5369,15 +5373,16 @@ void DrawScene(
 			}
 
 			#ifdef GGREDUCED
+			// LB: Not playing nicely with other renderings!
 			// I think there should be no rendering of transparent objects in the prepass
 			// as they write into the depth buffer making transparency not work so well (hair, leaves)
-			if (renderPass == RENDERPASS_PREPASS && !object.IsCastingShadow())
-			{
-				// LB: not ideal, but if not casting shadow, do not write any deoth Zs!
-				// LB: ARG! Does not seem to stop Z depth being written, maybe it is the shaders
-				// writing to depth or similar, or depth writing in the main pass..
-				continue;
-			}
+			//if (renderPass == RENDERPASS_PREPASS && !object.IsCastingShadow())
+			//{
+			//	// LB: not ideal, but if not casting shadow, do not write any deoth Zs!
+			//	// LB: ARG! Does not seem to stop Z depth being written, maybe it is the shaders
+			//	// writing to depth or similar, or depth writing in the main pass..
+			//	continue;
+			//}
 			#endif
 
 			RenderBatch* batch = (RenderBatch*)GetRenderFrameAllocator(cmd).allocate(sizeof(RenderBatch));
