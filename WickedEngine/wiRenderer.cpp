@@ -5391,6 +5391,11 @@ void DrawScene(
 #ifdef GGREDUCED
 		//PE: renderQueue.sort is not using distance but meshIndex<<8 , dist&0xff, so order of transparent mesh'es was not correct.
 		//LB: I can still trick the order with 2 transparent puddles, move 2nd slightly higher and further away than the 1st and it renders the 2nd FIRST, even though it should be rendered LAST as it is still on top
+		//PE: It already sort distance from camera to center of the object, so we cant really improve this.
+		//PE: Its a issue in all engines that cant be fixed by code. We could add a sort distance bias so user decide, but thats it.
+		//PE: Translucency Sort Priority : https://docs.unrealengine.com/en-US/RenderingAndGraphics/Materials/HowTo/Transparency/index.html
+		//PE: https://www.khronos.org/opengl/wiki/Transparency_Sorting
+
 		if (transparent)
 			renderQueue.sortdistance(RenderQueue::SORT_BACK_TO_FRONT);
 		else
