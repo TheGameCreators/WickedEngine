@@ -12,6 +12,22 @@ bool ImGuiHook_GetScissorArea(float* pX1, float* pY1, float* pX2, float* pY2);
 
 using namespace wiGraphics;
 
+#ifdef GGREDUCED
+namespace GGTerrain {
+	extern "C" void GGTerrain_Draw( wiGraphics::CommandList cmd );
+	extern "C" void __GGTerrain_Draw_EMPTY( wiGraphics::CommandList cmd ) {}
+	// use GGTerrain_Draw() if it is defined, otherwise use __GGTerrain_Draw_EMPTY()
+	#pragma comment(linker, "/alternatename:GGTerrain_Draw=__GGTerrain_Draw_EMPTY")
+}
+namespace GPUParticles
+{
+	extern "C" void gpup_draw( const wiScene::CameraComponent& camera, wiGraphics::CommandList cmd );
+	extern "C" void __gpup_draw_EMPTY( const wiScene::CameraComponent& camera, wiGraphics::CommandList cmd ) {}
+	// use gpup_draw() if it is defined, otherwise use __gpup_draw_EMPTY()
+	#pragma comment(linker, "/alternatename:gpup_draw=__gpup_draw_EMPTY")
+}
+#endif
+
 void RenderPath3D::ResizeBuffers()
 {
 	GraphicsDevice* device = wiRenderer::GetDevice();
@@ -873,6 +889,10 @@ void RenderPath3D::Render() const
 		vp.Height = (float)depthBuffer_Main.GetDesc().Height;
 		device->BindViewports(1, &vp, cmd);
 
+#ifdef GGREDUCED
+		GGTerrain::GGTerrain_Draw( cmd );
+#endif
+
 		if (wiRenderer::GetRaytracedShadowsEnabled() || wiRenderer::GetScreenSpaceShadowsEnabled())
 		{
 			device->BindResource(PS, &rtShadow, TEXSLOT_RENDERPATH_RTSHADOW, cmd);
@@ -1271,6 +1291,9 @@ void RenderPath3D::RenderTransparents(CommandList cmd) const
 #endif
 
 	wiRenderer::DrawSoftParticles(visibility_main, rtLinearDepth, false, cmd);
+#ifdef GGREDUCED
+	GPUParticles::gpup_draw( wiScene::GetCamera(), cmd );
+#endif
 
 	// though wiProfiler::EndRange(range); seems to be missing!
 
