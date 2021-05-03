@@ -890,7 +890,7 @@ void RenderPath3D::Render() const
 		device->BindViewports(1, &vp, cmd);
 
 #ifdef GGREDUCED
-		GGTerrain::GGTerrain_Draw( cmd );
+		GGTerrain::GGTerrain_Draw(cmd);
 #endif
 
 		if (wiRenderer::GetRaytracedShadowsEnabled() || wiRenderer::GetScreenSpaceShadowsEnabled())
@@ -905,7 +905,19 @@ void RenderPath3D::Render() const
 		device->BindResource(PS, &tiledLightResources.entityTiles_Opaque, TEXSLOT_RENDERPATH_ENTITYTILES, cmd);
 		device->BindResource(PS, getReflectionsEnabled() ? &rtReflection : wiTextureHelper::getTransparent(), TEXSLOT_RENDERPATH_REFLECTION, cmd);
 		//PE: Below line often crash here at startup ?.
+#ifdef GGREDUCED
+		const Texture* white = wiTextureHelper::getWhite();
+		if( !(white != nullptr && white->IsValid()))
+		{
+			//__debugbreak();
+		}
+		else
+		{
+			device->BindResource(PS, getAOEnabled() ? &rtAO : white, TEXSLOT_RENDERPATH_AO, cmd);
+		}
+#else
 		device->BindResource(PS, getAOEnabled() ? &rtAO : wiTextureHelper::getWhite(), TEXSLOT_RENDERPATH_AO, cmd);
+#endif
 		device->BindResource(PS, getSSREnabled() || getRaytracedReflectionEnabled() ? &rtSSR : wiTextureHelper::getTransparent(), TEXSLOT_RENDERPATH_SSR, cmd);
 		wiRenderer::DrawScene(visibility_main, RENDERPASS_MAIN, cmd, drawscene_flags);
 		wiRenderer::DrawSky(*scene, cmd);

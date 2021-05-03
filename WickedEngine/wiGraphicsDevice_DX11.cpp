@@ -2951,6 +2951,14 @@ void GraphicsDevice_DX11::BindViewports(uint32_t NumViewports, const Viewport* p
 	}
 	deviceContexts[cmd]->RSSetViewports(NumViewports, d3dViewPorts);
 }
+
+
+//PE: When running with optimizing off , i never get the crash. so try to only disable optimizing for this function.
+//PE: @Lee Looks like i dont get the crash when not optimizing this function ? could you test if it also works for you.
+#ifdef GGREDUCED
+#pragma optimize("", off)
+#endif
+
 void GraphicsDevice_DX11::BindResource(SHADERSTAGE stage, const GPUResource* resource, uint32_t slot, CommandList cmd, int subresource)
 {
 	if (resource != nullptr && resource->IsValid())
@@ -2960,6 +2968,13 @@ void GraphicsDevice_DX11::BindResource(SHADERSTAGE stage, const GPUResource* res
 
 		if (subresource < 0)
 		{
+#ifdef GGREDUCED
+			if (internal_state->srv == NULL)
+			{
+				//__debugbreak();
+				return;
+			}
+#endif
 			SRV = internal_state->srv.Get();
 		}
 		else
@@ -2993,6 +3008,10 @@ void GraphicsDevice_DX11::BindResource(SHADERSTAGE stage, const GPUResource* res
 		}
 	}
 }
+#ifdef GGREDUCED
+#pragma optimize("", on)
+#endif
+
 void GraphicsDevice_DX11::BindResources(SHADERSTAGE stage, const GPUResource *const* resources, uint32_t slot, uint32_t count, CommandList cmd)
 {
 	assert(count <= 16);
