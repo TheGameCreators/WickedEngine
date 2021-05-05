@@ -2639,11 +2639,30 @@ void GraphicsDevice_DX11::SetCommonSampler(const StaticSampler* sam)
 	common_samplers.push_back(*sam);
 }
 
+#ifdef GGREDUCED
+#pragma optimize("", off)
+#endif
+
 void GraphicsDevice_DX11::SetName(GPUResource* pResource, const char* name)
 {
 	auto internal_state = to_internal(pResource);
+#ifdef GGREDUCED
+	//PE: Got a crash here, internal_state->resource = NULL
+	if (!internal_state)
+	{
+		return;
+	}
+	if (!internal_state->resource)
+	{
+		return;
+	}
+#endif
 	internal_state->resource->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)strlen(name), name);
 }
+
+#ifdef GGREDUCED
+#pragma optimize("", on)
+#endif
 
 void GraphicsDevice_DX11::PresentBegin(CommandList cmd)
 {
