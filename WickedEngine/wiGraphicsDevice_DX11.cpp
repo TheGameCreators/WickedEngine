@@ -2995,6 +2995,14 @@ void GraphicsDevice_DX11::BindResource(SHADERSTAGE stage, const GPUResource* res
 			}
 #endif
 			SRV = internal_state->srv.Get();
+#ifdef GGREDUCED
+			if (SRV == NULL || SRV == (ID3D11ShaderResourceView*)0xdddddddddddddddd || SRV == (ID3D11ShaderResourceView*)1)
+			{
+				//__debugbreak();
+				return;
+			}
+#endif
+
 		}
 		else
 		{
