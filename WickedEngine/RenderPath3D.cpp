@@ -882,7 +882,7 @@ void RenderPath3D::Render() const
 
 		device->RenderPassBegin(&renderpass_main, cmd);
 
-		auto range = wiProfiler::BeginRangeGPU("Opaque Scene", cmd);
+		
 
 		Viewport vp;
 		vp.Width = (float)depthBuffer_Main.GetDesc().Width;
@@ -890,8 +890,12 @@ void RenderPath3D::Render() const
 		device->BindViewports(1, &vp, cmd);
 
 #ifdef GGREDUCED
+		auto range1 = wiProfiler::BeginRangeGPU("Terrain", cmd);
 		GGTerrain::GGTerrain_Draw( cmd );
+		wiProfiler::EndRange(range1);
 #endif
+
+		auto range = wiProfiler::BeginRangeGPU("Opaque Scene", cmd);
 
 		if (wiRenderer::GetRaytracedShadowsEnabled() || wiRenderer::GetScreenSpaceShadowsEnabled())
 		{

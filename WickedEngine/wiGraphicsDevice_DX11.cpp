@@ -84,6 +84,10 @@ namespace DX11_Internal
 			_flag |= D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 		if (value & RESOURCE_MISC_TILED)
 			_flag |= D3D11_RESOURCE_MISC_TILED;
+#ifdef GGREDUCED
+		if (value & RESOURCE_MISC_GEN_MIPMAPS)
+			_flag |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
+#endif
 
 		return _flag;
 	}
