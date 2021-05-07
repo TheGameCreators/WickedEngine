@@ -3289,6 +3289,33 @@ void GraphicsDevice_DX11::MSAAResolve(const Texture* pDst, const Texture* pSrc, 
 	auto internal_state_dst = to_internal(pDst);
 	deviceContexts[cmd]->ResolveSubresource(internal_state_dst->resource.Get(), 0, internal_state_src->resource.Get(), 0, _ConvertFormat(pDst->desc.Format));
 }
+
+void GraphicsDevice_DX11::UpdateTexture(const Texture* tex, uint32_t mipLevel, const void* data, uint32_t dataRowStride, CommandList cmd)
+{
+	GPUResource* res = (GPUResource*)tex;
+	if ( res == nullptr || !res->IsValid() ) return;
+
+	auto internal_state = to_internal(res);
+	ID3D11Texture2D* d3dTex = (ID3D11Texture2D*) internal_state->resource.Get();
+
+	ID3D11DeviceContext* context = immediateContext.Get();
+	if ( cmd >= 0 && cmd < COMMANDLIST_COUNT ) context = deviceContexts[cmd].Get(); 
+	context->UpdateSubresource( d3dTex, 0, NULL, data, dataRowStride, 0 ); 
+}
+
+void GraphicsDevice_DX11::GenerateMipmaps(Texture* tex, CommandList cmd)
+{
+	GPUResource* res = (GPUResource*)tex;
+
+	if ( res == nullptr || !res->IsValid() ) return;
+	
+	auto internal_state = to_internal(res);
+	ID3D11ShaderResourceView* shaderView = internal_state->srv.Get();
+
+	ID3D11DeviceContext* context = immediateContext.Get();
+	if ( cmd >= 0 && cmd < COMMANDLIST_COUNT ) context = deviceContexts[cmd].Get(); 
+	context->GenerateMips( shaderView );
+}
 #endif
 void GraphicsDevice_DX11::UpdateBuffer(const GPUBuffer* buffer, const void* data, CommandList cmd, int dataSize)
 {
