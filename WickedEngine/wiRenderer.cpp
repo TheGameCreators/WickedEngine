@@ -372,7 +372,8 @@ struct RenderQueue
 	{
 		if (batchCount > 1)
 		{
-			std::sort(batchArray, batchArray + batchCount, [sortType](const RenderBatch& a, const RenderBatch& b) -> bool {
+			std::sort(batchArray, batchArray + batchCount, [sortType](const RenderBatch& a, const RenderBatch& b) -> bool
+			{
 				return ((sortType == SORT_FRONT_TO_BACK) ? (a.distance < b.distance) : (a.distance > b.distance));
 			});
 		}
@@ -382,26 +383,10 @@ struct RenderQueue
 	{
 		if (batchCount > 1)
 		{
-			std::sort(batchArray, batchArray + batchCount, [sortType](const RenderBatch& a, const RenderBatch& b) -> bool {
+			std::sort(batchArray, batchArray + batchCount, [sortType](const RenderBatch& a, const RenderBatch& b) -> bool
+			{
 				return ((sortType == SORT_FRONT_TO_BACK) ? (a.hash < b.hash) : (a.hash > b.hash));
 			});
-
-			//for (size_t i = 0; i < batchCount - 1; ++i)
-			//{
-			//	for (size_t j = i + 1; j < batchCount; ++j)
-			//	{
-			//		bool swap = false;
-			//		swap = sortType == SORT_FRONT_TO_BACK && batchArray[i].hash > batchArray[j].hash;
-			//		swap = sortType == SORT_BACK_TO_FRONT && batchArray[i].hash < batchArray[j].hash;
-
-			//		if (swap)
-			//		{
-			//			RenderBatch tmp = batchArray[i];
-			//			batchArray[i] = batchArray[j];
-			//			batchArray[j] = tmp;
-			//		}
-			//	}
-			//}
 		}
 	}
 };
@@ -1338,14 +1323,10 @@ void LoadShaders()
 							case BLENDMODE_OPAQUE:
 								desc.bs = &blendStates[BSTYPE_OPAQUE];
 								break;
-
-//LB: Not playing nicely with renders!								
-//#ifdef GGREDUCED
-//							case BLENDMODE_HAIR:
-//								desc.bs = &blendStates[BSTYPE_TRANSPARENT];
-//								break;
-//#endif
 							case BLENDMODE_ALPHA:
+#ifdef GGREDUCED
+							case BLENDMODE_ALPHANOZ:
+#endif
 								desc.bs = &blendStates[BSTYPE_TRANSPARENT];
 								break;
 							case BLENDMODE_ADDITIVE:
@@ -1376,13 +1357,24 @@ void LoadShaders()
 								desc.dss = &depthStencils[transparency ? DSSTYPE_DEPTHREAD : DSSTYPE_SHADOW];
 								break;
 							case RENDERPASS_MAIN:
-								if (blendMode == BLENDMODE_ADDITIVE )//|| blendMode == BLENDMODE_HAIR)
+								if (blendMode == BLENDMODE_ADDITIVE )
 								{
 									desc.dss = &depthStencils[DSSTYPE_DEPTHREAD];
 								}
 								else
 								{
+#ifdef GGREDUCED
+									if ( blendMode == BLENDMODE_ALPHANOZ )
+									{
+										desc.dss = &depthStencils[DSSTYPE_DEPTHREAD];
+									}
+									else
+									{
+										desc.dss = &depthStencils[transparency ? DSSTYPE_DEFAULT : DSSTYPE_DEPTHREADEQUAL];
+									}
+#else
 									desc.dss = &depthStencils[transparency ? DSSTYPE_DEFAULT : DSSTYPE_DEPTHREADEQUAL];
+#endif
 								}
 								break;
 							case RENDERPASS_ENVMAPCAPTURE:
@@ -1392,13 +1384,24 @@ void LoadShaders()
 								desc.dss = &depthStencils[DSSTYPE_XRAY];
 								break;
 							default:
-								if (blendMode == BLENDMODE_ADDITIVE )// || blendMode == BLENDMODE_HAIR)
+								if (blendMode == BLENDMODE_ADDITIVE )
 								{
 									desc.dss = &depthStencils[DSSTYPE_DEPTHREAD];
 								}
 								else
 								{
+#ifdef GGREDUCED
+									if ( blendMode == BLENDMODE_ALPHANOZ )
+									{
+										desc.dss = &depthStencils[DSSTYPE_DEPTHREAD];
+									}
+									else
+									{
+										desc.dss = &depthStencils[DSSTYPE_DEFAULT];
+									}
+#else
 									desc.dss = &depthStencils[DSSTYPE_DEFAULT];
+#endif
 								}
 								break;
 							}
@@ -2967,24 +2970,37 @@ void RenderMeshes(
 #ifdef GGREDUCED
 						// if mesh is double sided, probably hair or leaves, so ensure NO DEPTH WRITE happens to mess up coverage!!
 						BLENDMODE blendMode = material.GetBlendMode();
-
-						// LB: Hair solution not playing nicely with other objects
-						//if (mesh.IsDoubleSided()) blendMode = BLENDMODE_HAIR;
-#else
-						const BLENDMODE blendMode = material.GetBlendMode();
-#endif
-
 						const bool alphatest = material.IsAlphaTestEnabled() || forceAlphaTestForDithering;
 						OBJECTRENDERING_DOUBLESIDED doublesided = mesh.IsDoubleSided() ? OBJECTRENDERING_DOUBLESIDED_ENABLED : OBJECTRENDERING_DOUBLESIDED_DISABLED;
-
+						if ((renderTypeFlags & RENDERTYPE_TRANSPARENT) && doublesided == OBJECTRENDERING_DOUBLESIDED_ENABLED)
+						{
+							// LB: when rendering a double sided 'transparent' object, render the back half first, then the front half you see
+							BLENDMODE useBlendMode = blendMode;
+							if (useBlendMode == BLENDMODE_ALPHA) useBlendMode = BLENDMODE_ALPHANOZ;
+							OBJECTRENDERING_DOUBLESIDED regularRenderFront = OBJECTRENDERING_DOUBLESIDED_DISABLED;
+							pso = &PSO_object[material.shaderType][renderPass][useBlendMode][regularRenderFront][tessellatorRequested][alphatest];
+							assert(pso->IsValid());
+							doublesided = OBJECTRENDERING_DOUBLESIDED_BACKSIDE;
+							pso_backside = &PSO_object[material.shaderType][renderPass][useBlendMode][doublesided][tessellatorRequested][alphatest];
+							assert(pso_backside->IsValid());
+						}
+						else
+						{
+							pso = &PSO_object[material.shaderType][renderPass][blendMode][doublesided][tessellatorRequested][alphatest];
+							assert(pso->IsValid());
+						}
+#else
+						const BLENDMODE blendMode = material.GetBlendMode();
+						const bool alphatest = material.IsAlphaTestEnabled() || forceAlphaTestForDithering;
+						OBJECTRENDERING_DOUBLESIDED doublesided = mesh.IsDoubleSided() ? OBJECTRENDERING_DOUBLESIDED_ENABLED : OBJECTRENDERING_DOUBLESIDED_DISABLED;
 						pso = &PSO_object[material.shaderType][renderPass][blendMode][doublesided][tessellatorRequested][alphatest];
 						assert(pso->IsValid());
-
 						if ((renderTypeFlags & RENDERTYPE_TRANSPARENT) && doublesided == OBJECTRENDERING_DOUBLESIDED_ENABLED)
 						{
 							doublesided = OBJECTRENDERING_DOUBLESIDED_BACKSIDE;
 							pso_backside = &PSO_object[material.shaderType][renderPass][blendMode][doublesided][tessellatorRequested][alphatest];
 						}
+#endif
 					}
 				}
 
@@ -5359,31 +5375,24 @@ void DrawScene(
 	RenderQueue renderQueue;
 	for (uint32_t instanceIndex : vis.visibleObjects)
 	{
-		const ObjectComponent& object = vis.scene->objects[instanceIndex];
+		ObjectComponent& object = (ObjectComponent&)vis.scene->objects[instanceIndex]; // GGREDUCED was const
 
 		if (GetOcclusionCullingEnabled() && occlusion && object.IsOccluded())
 			continue;
 
 		if (object.IsRenderable() && (object.GetRenderTypes() & renderTypeFlags))
 		{
-			const float distance = wiMath::Distance(vis.camera->Eye, object.center);
+			float distance = wiMath::Distance(vis.camera->Eye, object.center); // GGREDUCED was const
 			if (object.IsImpostorPlacement() && distance > object.impostorSwapDistance + object.impostorFadeThresholdRadius)
 			{
 				continue;
 			}
 
-			#ifdef GGREDUCED
-			// LB: Not playing nicely with other renderings!
-			// I think there should be no rendering of transparent objects in the prepass
-			// as they write into the depth buffer making transparency not work so well (hair, leaves)
-			//if (renderPass == RENDERPASS_PREPASS && !object.IsCastingShadow())
-			//{
-			//	// LB: not ideal, but if not casting shadow, do not write any deoth Zs!
-			//	// LB: ARG! Does not seem to stop Z depth being written, maybe it is the shaders
-			//	// writing to depth or similar, or depth writing in the main pass..
-			//	continue;
-			//}
-			#endif
+#ifdef GGREDUCED
+			// LB: introduce a distance bias so that two transparent objects
+			// sharing the same space can set a priority of one over the other
+			distance = distance + object.GetRenderOrderBiasDistance();
+#endif
 
 			RenderBatch* batch = (RenderBatch*)GetRenderFrameAllocator(cmd).allocate(sizeof(RenderBatch));
 			size_t meshIndex = vis.scene->meshes.GetIndex(object.meshID);

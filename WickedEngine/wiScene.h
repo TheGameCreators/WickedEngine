@@ -625,6 +625,12 @@ namespace wiScene
 		uint32_t occlusionHistory = ~0;
 		int occlusionQueries[wiGraphics::GraphicsDevice::GetBackBufferCount()] = {};
 
+#ifdef GGREDUCED
+		float fRenderOrderBiasDistance = 0.0f;
+		inline void SetRenderOrderBiasDistance(float value) { fRenderOrderBiasDistance = value; }
+		inline float GetRenderOrderBiasDistance() { return fRenderOrderBiasDistance; }
+#endif
+
 		inline bool IsOccluded() const
 		{
 			// Perform a conservative occlusion test:

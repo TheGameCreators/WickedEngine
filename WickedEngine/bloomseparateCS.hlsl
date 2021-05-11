@@ -24,8 +24,11 @@ void main(uint3 DTid : SV_DispatchThreadID)
 	const float bloomThreshold = xPPParams0.x;
 //#ifndef GGREDUCED
 //  LB: this caused emissive to increase to white, loosing the emissive colors from the texture
+//  LB: but removing this completely causes terrible flashes and different artifacts (as before the big repo update)
+//      so it will go back but more subtle so it removes the artifacts but keeps the improved larger emissive bloom effect
 //	color = min(color, 10); // clamp upper limit: avoid incredibly large values to overly dominate bloom (high speculars were causing problems)
 //#endif
+	color = min(color, 20);
 	color = max(color - bloomThreshold, 0);
 
 	output[DTid.xy] = float4(color, 1);
