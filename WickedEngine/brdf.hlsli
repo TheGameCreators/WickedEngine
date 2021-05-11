@@ -225,7 +225,10 @@ struct Surface
 
 	inline void update()
 	{
-		roughness = clamp(roughness, 0.045, 1);
+//#ifndef GGREDUCED
+//		LB: this caused lights to show strong specular points in reflective surfaces - undesirable for now
+//		roughness = clamp(roughness, 0.045, 1);
+//#endif
 		roughnessBRDF = roughness * roughness;
 
 		sheen.roughness = clamp(sheen.roughness, 0.045, 1);

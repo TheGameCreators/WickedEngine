@@ -22,7 +22,10 @@ void main(uint3 DTid : SV_DispatchThreadID)
 	color /= 4.0f;
 
 	const float bloomThreshold = xPPParams0.x;
-	color = min(color, 10); // clamp upper limit: avoid incredibly large values to overly dominate bloom (high speculars were causing problems)
+//#ifndef GGREDUCED
+//  LB: this caused emissive to increase to white, loosing the emissive colors from the texture
+//	color = min(color, 10); // clamp upper limit: avoid incredibly large values to overly dominate bloom (high speculars were causing problems)
+//#endif
 	color = max(color - bloomThreshold, 0);
 
 	output[DTid.xy] = float4(color, 1);
