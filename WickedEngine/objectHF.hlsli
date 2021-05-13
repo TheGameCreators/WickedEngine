@@ -1644,6 +1644,15 @@ float4 main(PixelInput input) : SV_TARGET
 	return float4(velocity, 0, 0); /*FORMAT_R16G16_FLOAT*/
 #else
 #ifdef OUTPUT_GBUFFER
+	//#ifdef OBJECTSHADER_USE_TANGENT
+	// lovely hacks to visualize pixel shader data :) 
+	//color = float4(input.uvsets.x,input.uvsets.y, 0, 1);
+	//color = float4(surface.N.x,surface.N.y,surface.N.z, 1);
+	//float3 V = float3(0, 1, 0);
+	//V = mul(TBN, V);
+	//color = float4(V.x,V.y,V.z, 1);
+	//color = float4(input.tan.x,input.tan.y,input.tan.z, 1);
+	//#endif
 	return CreateGBuffer(color, surface);
 #else
 	return color;
