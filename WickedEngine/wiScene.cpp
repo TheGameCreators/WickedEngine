@@ -1237,6 +1237,10 @@ namespace wiScene
 			XMStoreFloat4x4(&Projection, XMMatrixPerspectiveFovLH(fov, width / height, zFarP, zNearP)); // reverse zbuffer!
 			Projection.m[2][0] = jitter.x;
 			Projection.m[2][1] = jitter.y;
+			// can use infinite far plane when using reversed float depth buffer
+			// but simulated sky doesn't work if we do that
+			//Projection.m[2][2] = 0;
+			//Projection.m[3][2] = zNearP;
 		}
 
 		XMVECTOR _Eye = XMLoadFloat3(&Eye);
