@@ -2233,6 +2233,32 @@ namespace wiScene
 					const float t = animation.amount;
 #endif
 
+/* thought this was a good idea, but too mahy thead/race issues to get an accurate position, abandon in favor of CPU approach!
+#ifdef GGREDUCED
+					// feature to capture delta shift of a specified limb within this animation
+					// such as a spine1 bone that moves off-centre, that we can use to determine
+					// how far to move an object when it is using true footplanting animations
+					if (channel.iUseSpineDeltaMode == 1 )
+					{
+						AnimationComponent::AnimationChannel* pChannelHack = (AnimationComponent::AnimationChannel*)&channel;
+						//float fActualWorldMovementX = target_transform->world._41 - pChannelHack->fLastWorldX;
+						//float fActualWorldMovementZ = target_transform->world._43 - pChannelHack->fLastWorldZ;
+						//pChannelHack->fDeltaX += fActualWorldMovementX;
+						//pChannelHack->fDeltaZ += fActualWorldMovementZ;
+						//pChannelHack->fLastWorldX = target_transform->world._41;
+						//pChannelHack->fLastWorldZ = target_transform->world._43;
+						float fActualWorldMovementX = transform.translation_local.x - pChannelHack->fLastWorldX;
+						float fActualWorldMovementZ = transform.translation_local.z - pChannelHack->fLastWorldZ;
+						pChannelHack->fDeltaX += fActualWorldMovementX;
+						pChannelHack->fDeltaZ += fActualWorldMovementZ;
+						pChannelHack->fLastWorldX = transform.translation_local.x;
+						pChannelHack->fLastWorldZ = transform.translation_local.z;
+						transform.translation_local.x -= fActualWorldMovementX;
+						transform.translation_local.z -= fActualWorldMovementZ;
+					}
+#endif
+*/
+
 					const XMVECTOR aS = XMLoadFloat3(&target_transform->scale_local);
 					const XMVECTOR aR = XMLoadFloat4(&target_transform->rotation_local);
 					const XMVECTOR aT = XMLoadFloat3(&target_transform->translation_local);
