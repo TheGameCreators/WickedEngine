@@ -18,10 +18,11 @@ static const float2 skyViewLUTRes = float2(192.0, 104);
 
 #define USE_CornetteShanks
 
-#define M_TO_SKY_UNIT 0.001f // Engine units are in meters
+// can't use GGREDUCED in shaders
+#define M_TO_SKY_UNIT 0.0000254f // Engine units are in inches
 #define SKY_UNIT_TO_M (1.0 / M_TO_SKY_UNIT)
 
-#define PLANET_RADIUS_OFFSET 0.001f // Float accuracy offset in Sky unit (km, so this is 1m)
+#define PLANET_RADIUS_OFFSET 0.0000254f // Float accuracy offset in Sky unit (km, so this is 1 inch)
 
 struct AtmosphereParameters
 {

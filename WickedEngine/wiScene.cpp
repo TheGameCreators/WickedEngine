@@ -1237,10 +1237,15 @@ namespace wiScene
 			XMStoreFloat4x4(&Projection, XMMatrixPerspectiveFovLH(fov, width / height, zFarP, zNearP)); // reverse zbuffer!
 			Projection.m[2][0] = jitter.x;
 			Projection.m[2][1] = jitter.y;
-			// can use infinite far plane when using reversed float depth buffer
-			// but simulated sky doesn't work if we do that
-			//Projection.m[2][2] = 0;
-			//Projection.m[3][2] = zNearP;
+#ifdef GGREDUCED
+	// can use infinite far plane when using reversed float depth buffer
+	#define INFINITE_FAR_PLANE
+	
+	#ifdef INFINITE_FAR_PLANE
+			Projection.m[2][2] = 0;
+			Projection.m[3][2] = zNearP;
+	#endif
+#endif
 		}
 
 		XMVECTOR _Eye = XMLoadFloat3(&Eye);
@@ -1250,6 +1255,33 @@ namespace wiScene
 		XMMATRIX _V = XMMatrixLookToLH(_Eye, _At, _Up);
 		XMStoreFloat4x4(&View, _V);
 
+#ifdef GGREDUCED
+		XMMATRIX _InvV = XMMatrixInverse(nullptr, _V);
+		XMStoreFloat4x4(&InvView, _InvV);
+
+		XMMATRIX _P = XMLoadFloat4x4(&Projection);
+	#ifdef INFINITE_FAR_PLANE
+		XMFLOAT4X4 InvP;
+		memset( &InvP, 0, sizeof(XMFLOAT4X4) );
+		InvP.m[0][0] = zNearP / Projection.m[0][0];
+		InvP.m[1][1] = zNearP / Projection.m[1][1];
+		InvP.m[3][0] = -Projection.m[2][0] / Projection.m[0][0];
+		InvP.m[3][1] = -Projection.m[2][1] / Projection.m[1][1];
+		InvP.m[3][2] = zNearP;
+		InvP.m[2][3] = 1;
+		InvP.m[3][3] = 0.000005f; // should be 0 but don't want infinities, value carefully chosen to avoid shadow artifacts
+		XMMATRIX _InvP = XMLoadFloat4x4(&InvP);
+	#else
+		XMMATRIX _InvP = XMMatrixInverse(nullptr, _P);
+	#endif
+		XMStoreFloat4x4(&InvProjection, _InvP);
+
+		XMMATRIX _VP = XMMatrixMultiply(_V, _P);
+		XMStoreFloat4x4(&VP, _VP);
+
+		XMMATRIX _InvVP = XMMatrixMultiply(_InvP, _InvV);
+		XMStoreFloat4x4(&InvVP, _InvVP);
+#else
 		XMMATRIX _P = XMLoadFloat4x4(&Projection);
 		XMMATRIX _InvP = XMMatrixInverse(nullptr, _P);
 		XMStoreFloat4x4(&InvProjection, _InvP);
@@ -1261,6 +1293,7 @@ namespace wiScene
 		XMStoreFloat4x4(&InvVP, XMMatrixInverse(nullptr, _VP));
 		XMStoreFloat4x4(&Projection, _P);
 		XMStoreFloat4x4(&InvProjection, XMMatrixInverse(nullptr, _P));
+#endif
 
 		frustum.Create(_VP);
 	}
