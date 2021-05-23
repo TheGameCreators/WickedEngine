@@ -1039,14 +1039,6 @@ namespace wiScene
 			XMVECTOR vPreFrameScale;
 			XMVECTOR qPreFrameRotation;
 			XMVECTOR vPreFrameTranslation;
-			/* thought this was a good idea, but too mahy thead/race issues to get an accurate position, abandon in favor of CPU approach!
-			// feature for detecting spine movement to create true foot planting
-			int iUseSpineDeltaMode = 0;
-			float fLastWorldX = 0.0f;
-			float fLastWorldZ = 0.0f;
-			float fDeltaX = 0.0f;
-			float fDeltaZ = 0.0f;
-			*/
 #endif
 
 			enum Path
