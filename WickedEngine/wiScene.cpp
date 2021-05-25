@@ -1239,9 +1239,10 @@ namespace wiScene
 			Projection.m[2][1] = jitter.y;
 #ifdef GGREDUCED
 	// can use infinite far plane when using reversed float depth buffer
-	//#define INFINITE_FAR_PLANE
+	#define INFINITE_FAR_PLANE
 	
 	#ifdef INFINITE_FAR_PLANE
+			zFarP = 10000000;
 			Projection.m[2][2] = 0;
 			Projection.m[3][2] = zNearP;
 	#endif

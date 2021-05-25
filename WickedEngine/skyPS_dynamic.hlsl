@@ -12,7 +12,7 @@ float4 main(float4 pos : SV_POSITION, float2 clipspace : TEXCOORD) : SV_TARGET
 	float3 V = mul( InvView3, unprojected.xyz );
 	V = normalize( V );
 	
-	float4 color = float4(GetDynamicSkyColor(V), 1);
+	float4 color = float4(GetDynamicSkyColor(V, true, false), 1);
 
 	return color;
 }
