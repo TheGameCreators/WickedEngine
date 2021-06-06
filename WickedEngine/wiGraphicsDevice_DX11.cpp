@@ -3336,7 +3336,7 @@ void GraphicsDevice_DX11::MSAAResolve(const Texture* pDst, const Texture* pSrc, 
 	deviceContexts[cmd]->ResolveSubresource(internal_state_dst->resource.Get(), 0, internal_state_src->resource.Get(), 0, _ConvertFormat(pDst->desc.Format));
 }
 
-void GraphicsDevice_DX11::UpdateTexture(const Texture* tex, uint32_t mipLevel, const void* data, uint32_t dataRowStride, CommandList cmd)
+void GraphicsDevice_DX11::UpdateTexture(const Texture* tex, uint32_t mipLevel, const void* copyboxptr, const void* data, uint32_t dataRowStride, CommandList cmd)
 {
 	GPUResource* res = (GPUResource*)tex;
 	if ( res == nullptr || !res->IsValid() ) return;
