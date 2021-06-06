@@ -298,7 +298,7 @@ namespace wiGraphics
 #ifdef GGREDUCED
 		void CopyTexture2D_Region(const Texture* pDst, uint32_t dstMip, uint32_t dstX, uint32_t dstY, const Texture* pSrc, uint32_t srcMip, CommandList cmd) override;
 		void MSAAResolve(const Texture* pDst, const Texture* pSrc, CommandList cmd) override;
-		void UpdateTexture(const Texture* tex, uint32_t mipLevel, const void* data, uint32_t dataRowStride, CommandList cmd) override;
+		void UpdateTexture(const Texture* tex, uint32_t mipLevel, CopyBox* dstBox, const void* data, uint32_t dataRowStride, CommandList cmd) override;
 		void GenerateMipmaps(Texture* tex, CommandList cmd) override;
 #endif
 		void UpdateBuffer(const GPUBuffer* buffer, const void* data, CommandList cmd, int dataSize = -1) override;

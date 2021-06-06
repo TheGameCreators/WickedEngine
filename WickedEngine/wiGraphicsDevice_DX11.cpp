@@ -3290,7 +3290,7 @@ void GraphicsDevice_DX11::MSAAResolve(const Texture* pDst, const Texture* pSrc, 
 	deviceContexts[cmd]->ResolveSubresource(internal_state_dst->resource.Get(), 0, internal_state_src->resource.Get(), 0, _ConvertFormat(pDst->desc.Format));
 }
 
-void GraphicsDevice_DX11::UpdateTexture(const Texture* tex, uint32_t mipLevel, const void* data, uint32_t dataRowStride, CommandList cmd)
+void GraphicsDevice_DX11::UpdateTexture(const Texture* tex, uint32_t mipLevel, CopyBox* dstBox, const void* data, uint32_t dataRowStride, CommandList cmd)
 {
 	GPUResource* res = (GPUResource*)tex;
 	if ( res == nullptr || !res->IsValid() ) return;
@@ -3300,7 +3300,7 @@ void GraphicsDevice_DX11::UpdateTexture(const Texture* tex, uint32_t mipLevel, c
 
 	ID3D11DeviceContext* context = immediateContext.Get();
 	if ( cmd >= 0 && cmd < COMMANDLIST_COUNT ) context = deviceContexts[cmd].Get(); 
-	context->UpdateSubresource( d3dTex, mipLevel, NULL, data, dataRowStride, 0 ); 
+	context->UpdateSubresource( d3dTex, mipLevel, (D3D11_BOX*)dstBox, data, dataRowStride, 0 ); 
 }
 
 void GraphicsDevice_DX11::GenerateMipmaps(Texture* tex, CommandList cmd)
