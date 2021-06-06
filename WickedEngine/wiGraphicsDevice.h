@@ -10,6 +10,16 @@ namespace wiGraphics
 	typedef uint8_t CommandList;
 	static const CommandList COMMANDLIST_COUNT = 32;
 
+	struct CopyBox
+	{
+		uint32_t left;
+		uint32_t top;
+		uint32_t front;
+		uint32_t right;
+		uint32_t bottom;
+		uint32_t back;
+	};
+
 	class GraphicsDevice
 	{
 	protected:
@@ -158,7 +168,7 @@ namespace wiGraphics
 #ifdef GGREDUCED
 		virtual void CopyTexture2D_Region(const Texture* pDst, uint32_t dstMip, uint32_t dstX, uint32_t dstY, const Texture* pSrc, uint32_t srcMip, CommandList cmd) = 0;
 		virtual void MSAAResolve(const Texture* pDst, const Texture* pSrc, CommandList cmd) = 0;
-		virtual void UpdateTexture(const Texture* tex, uint32_t mipLevel, const void* copyboxptr, const void* data, uint32_t dataRowStride, CommandList cmd) = 0;
+		virtual void UpdateTexture(const Texture* tex, uint32_t mipLevel, CopyBox* dstBox, const void* data, uint32_t dataRowStride, CommandList cmd) = 0;
 		virtual void GenerateMipmaps(Texture* tex, CommandList cmd) = 0;
 #endif
 		virtual void UpdateBuffer(const GPUBuffer* buffer, const void* data, CommandList cmd, int dataSize = -1) = 0;

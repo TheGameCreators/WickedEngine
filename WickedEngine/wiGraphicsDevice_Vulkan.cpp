@@ -6576,7 +6576,7 @@ using namespace Vulkan_Internal;
 	void GraphicsDevice_Vulkan::MSAAResolve(const Texture* pDst, const Texture* pSrc, CommandList cmd)
 	{
 	}
-	void GraphicsDevice_Vulkan::UpdateTexture(const Texture* tex, uint32_t mipLevel, const void* copyboxptr, const void* data, uint32_t dataRowStride, CommandList cmd)
+	void GraphicsDevice_Vulkan::UpdateTexture(const Texture* tex, uint32_t mipLevel, CopyBox* dstBox, const void* data, uint32_t dataRowStride, CommandList cmd)
 	{
 	}
 	void GraphicsDevice_Vulkan::GenerateMipmaps(Texture* tex, CommandList cmd)

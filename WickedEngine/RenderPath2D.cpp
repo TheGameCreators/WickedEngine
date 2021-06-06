@@ -6,6 +6,13 @@
 
 #ifdef GGREDUCED
 void ImGuiHook_RenderCall(void* ctx);
+
+namespace GGTerrain {
+	extern "C" void GGTerrain_Draw_Debug( wiGraphics::CommandList cmd );
+	extern "C" void __GGTerrain_Draw_Debug_EMPTY( wiGraphics::CommandList cmd ) {}
+	// use GGTerrain_Draw_Debug() if it is defined, otherwise use __GGTerrain_Draw_Debug_EMPTY()
+	#pragma comment(linker, "/alternatename:GGTerrain_Draw_Debug=__GGTerrain_Draw_Debug_EMPTY")
+}
 #endif
 
 using namespace wiGraphics;
@@ -338,6 +345,8 @@ void RenderPath2D::Compose(CommandList cmd) const
 	// hook back to main app to allow it to render IMGUI IDE
 	GraphicsDevice* device = wiRenderer::GetDevice();
 	ImGuiHook_RenderCall((void*)device->GetDeviceContext(cmd));
+
+	GGTerrain::GGTerrain_Draw_Debug( cmd );
 #endif
 
 	RenderPath::Compose(cmd);
