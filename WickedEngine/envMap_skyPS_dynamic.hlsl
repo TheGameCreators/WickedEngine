@@ -7,6 +7,6 @@
 float4 main(PixelInput input) : SV_TARGET
 {
 	float3 normal = normalize(input.nor);
-	float4 color = float4(GetDynamicSkyColor(normal), 1);
+	float4 color = float4(GetDynamicSkyColor(normal, true, false), 1);
 	return float4(color.rgb,1);
 }

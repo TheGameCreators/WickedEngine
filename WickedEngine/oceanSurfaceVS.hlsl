@@ -43,10 +43,12 @@ PSIn main(uint fakeIndex : SV_VERTEXID)
 
 	// Perform ray tracing of screen grid and plane surface to unproject to world space:
 	float3 o = g_xCamera_CamPos;
-	float4 r = mul(g_xCamera_InvVP, float4(Out.pos.xy, 0, 1));
+	float4 r = mul(g_xCamera_InvP, float4(Out.pos.xy, 1, 1)); // use Z=1 to get a vector to the near plane rather than the far plane (might be infinite)
 	r.xyz /= r.w;
-	float3 d = normalize(o.xyz - r.xyz);
-
+	float3x3 InvView3 = (float3x3) g_xCamera_InvV;
+	float3 d = mul( InvView3, r.xyz );
+	d = -normalize( d );
+	
 	float3 worldPos = intersectPlaneClampInfinite(o, d, float3(0, 1, 0), xOceanWaterHeight);
 
 	// Displace surface:

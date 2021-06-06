@@ -95,12 +95,15 @@ inline Ray CreateRay(float3 origin, float3 direction)
 
 inline Ray CreateCameraRay(float2 clipspace)
 {
-	float4 unprojected = mul(g_xCamera_InvVP, float4(clipspace, 0, 1));
+	float4 unprojected = mul(g_xCamera_InvP, float4(clipspace, 1, 1));
 	unprojected.xyz /= unprojected.w;
 
 	const float3 origin = g_xCamera_CamPos;
-	const float3 direction = normalize(unprojected.xyz - origin);
 
+	float3x3 InvView3 = (float3x3) g_xCamera_InvV;
+	float3 direction = mul( InvView3, unprojected.xyz );
+	direction = normalize( direction );
+	
 	return CreateRay(origin, direction);
 }
 

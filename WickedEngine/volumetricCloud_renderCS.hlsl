@@ -57,7 +57,7 @@ static const float g_HorizonBlendPower = 2.0;
 static const float g_WeatherDensityAmount = 0.0; // Rain clouds disabled by default.
 
 // Modelling
-static const float g_CloudStartHeight = 3000.0;
+static const float g_CloudStartHeight = 8000.0;
 static const float g_CloudThickness = 4000.0;
 static const float g_SkewAlongWindDirection = 700.0;
 
@@ -75,7 +75,7 @@ static const float g_DetailNoiseModifier = 0.2;
 static const float g_DetailNoiseHeightFraction = 10.0;
 static const float g_CurlNoiseModifier = 550.0;
 
-static const float g_CoverageAmount = 2.0;
+static const float g_CoverageAmount = 1.5;
 static const float g_CoverageMinimum = 1.05;
 static const float g_TypeAmount = 1.0;
 static const float g_TypeOverall = 0.0;
@@ -100,7 +100,7 @@ static const float4 g_CloudGradientLarge = float4(0.02, 0.07, 0.88, 1.0);
 static const int g_MaxStepCount = 128; // Maximum number of iterations. Higher gives better images but may be slow.
 static const float g_MaxMarchingDistance = 30000.0; // Clamping the marching steps to be within a certain distance.
 static const float g_InverseDistanceStepCount = 15000.0; // Distance over which the raymarch steps will be evenly distributed.
-static const float g_RenderDistance = 70000.0; // Maximum distance to march before returning a miss.
+static const float g_RenderDistance = 300000.0; // Maximum distance to march before returning a miss.
 static const float g_LODDistance = 25000.0; // After a certain distance, noises will get higher LOD
 static const float g_LODMin = 0.0; // 
 static const float g_BigStepMarch = 3.0; // How long inital rays should be until they hit something. Lower values may ives a better image but may be slower.
@@ -112,7 +112,7 @@ float GetHeightFractionForPoint(AtmosphereParameters atmosphere, float3 pos)
 	float planetRadius = atmosphere.bottomRadius * SKY_UNIT_TO_M;
 	float3 planetCenterWorld = atmosphere.planetCenter * SKY_UNIT_TO_M;
 
-	return saturate((distance(pos, planetCenterWorld) - (planetRadius + g_CloudStartHeight)) / g_CloudThickness);
+	return saturate((distance(pos, planetCenterWorld) - (planetRadius + (g_xFrame_CloudScale*25000000))) / g_CloudThickness);
 }
 
 float SampleGradient(float4 gradient, float heightFraction)
@@ -141,7 +141,7 @@ float3 SampleWeather(float3 pos, float heightFraction, float2 coverageWindOffset
     //weatherData.r *= lerp(1, RemapClamped(pow(heightFraction * xPPDebugParams.y, 0.5), 0.4, 0.95, 1.0, 0.2), xPPDebugParams.x);
     
     // Apply effects for coverage
-	weatherData.r = RemapClamped(weatherData.r * g_CoverageAmount, 0.0, 1.0, g_CoverageMinimum - 1.0, 1.0);
+	weatherData.r = RemapClamped(weatherData.r * (g_xFrame_Cloudiness*5 + 0.5), 0.0, 1.0, g_CoverageMinimum - 1.0, 1.0);
 	weatherData.g = RemapClamped(weatherData.g * g_TypeAmount, 0.0, 1.0, g_TypeOverall, 1.0);
     
 	return weatherData.rgb;
@@ -457,10 +457,10 @@ void RenderClouds(float3 rayOrigin, float3 rayDirection, float t, float steps, f
 {
     // Wind animation offsets
 	float3 windDirection = float3(cos(g_WindAngle), -g_WindUpAmount, sin(g_WindAngle));
-	float3 windOffset = g_WindSpeed * g_AnimationMultiplier * windDirection * g_xFrame_Time;
+	float3 windOffset = (g_xFrame_CloudSpeed*20) * g_AnimationMultiplier * windDirection * g_xFrame_Time;
     
 	float2 coverageWindDirection = float2(cos(g_CoverageWindAngle), sin(g_CoverageWindAngle));
-	float2 coverageWindOffset = g_CoverageWindSpeed * g_AnimationMultiplier * coverageWindDirection * g_xFrame_Time;
+	float2 coverageWindOffset = (g_xFrame_CloudSpeed*40) * g_AnimationMultiplier * coverageWindDirection * g_xFrame_Time;
 
 	
 	AtmosphereParameters atmosphere = GetAtmosphereParameters();
@@ -578,10 +578,11 @@ void main(uint3 DTid : SV_DispatchThreadID)
 	const float2 uv = (DTid.xy + 0.5) * xPPResolution_rcp;
 	const float2 duv = float2(uv.x, 1.0 - uv.y);
     
-	float3 viewVector = mul(g_xCamera_InvP, float4(duv * 2.0 - 1.0, 0.0, 1.0)).xyz;
-	viewVector = mul(g_xCamera_InvV, float4(viewVector, 0.0)).xyz;
+	float4 viewVector = mul(g_xCamera_InvP, float4(duv * 2.0 - 1.0, 0.0, 1.0));
+	viewVector.xyz /= viewVector.w;
+	viewVector = mul(g_xCamera_InvV, float4(viewVector.xyz, 0.0));
     
-	float3 rayDirection = normalize(viewVector);
+	float3 rayDirection = normalize(viewVector.xyz);
 	float3 rayOrigin = g_xCamera_CamPos;
 
 
@@ -596,8 +597,8 @@ void main(uint3 DTid : SV_DispatchThreadID)
 		float planetRadius = parameters.bottomRadius * SKY_UNIT_TO_M;
 		float3 planetCenterWorld = parameters.planetCenter * SKY_UNIT_TO_M;
 
-		const float cloudBottomRadius = planetRadius + g_CloudStartHeight;
-		const float cloudTopRadius = planetRadius + g_CloudStartHeight + g_CloudThickness;
+		const float cloudBottomRadius = planetRadius + g_xFrame_CloudScale*25000000;
+		const float cloudTopRadius = planetRadius + g_xFrame_CloudScale*25000000 + g_CloudThickness;
         
 		float2 tTopSolutions = 0.0;
 		if (TraceSphereIntersections(rayOrigin, rayDirection, planetCenterWorld, cloudTopRadius, tTopSolutions))

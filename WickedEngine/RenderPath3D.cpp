@@ -18,6 +18,11 @@ namespace GGTerrain {
 	extern "C" void __GGTerrain_Draw_EMPTY( wiGraphics::CommandList cmd ) {}
 	// use GGTerrain_Draw() if it is defined, otherwise use __GGTerrain_Draw_EMPTY()
 	#pragma comment(linker, "/alternatename:GGTerrain_Draw=__GGTerrain_Draw_EMPTY")
+
+	extern "C" void GGTerrain_Draw_Prepass( wiGraphics::CommandList cmd );
+	extern "C" void __GGTerrain_Draw_Prepass_EMPTY( wiGraphics::CommandList cmd ) {}
+	// use GGTerrain_Draw_Prepass() if it is defined, otherwise use __GGTerrain_Draw_Prepass_EMPTY()
+	#pragma comment(linker, "/alternatename:GGTerrain_Draw_Prepass=__GGTerrain_Draw_Prepass_EMPTY")
 }
 namespace GPUParticles
 {
@@ -651,12 +656,20 @@ void RenderPath3D::Render() const
 		device->RenderPassBegin(&renderpass_depthprepass, cmd);
 
 		device->EventBegin("Opaque Z-prepass", cmd);
-		auto range = wiProfiler::BeginRangeGPU("Z-Prepass", cmd);
-
+		
 		Viewport vp;
 		vp.Width = (float)depthBuffer_Main.GetDesc().Width;
 		vp.Height = (float)depthBuffer_Main.GetDesc().Height;
 		device->BindViewports(1, &vp, cmd);
+
+#ifdef GGREDUCED
+		auto range1 = wiProfiler::BeginRangeGPU("Terrain-Prepass", cmd);
+		GGTerrain::GGTerrain_Draw_Prepass( cmd );
+		wiProfiler::EndRange(range1);
+#endif
+
+		auto range = wiProfiler::BeginRangeGPU("Z-Prepass", cmd);
+
 		wiRenderer::DrawScene(visibility_main, RENDERPASS_PREPASS, cmd, drawscene_flags);
 		wiRenderer::DrawSkyVelocity(cmd);
 
@@ -694,12 +707,14 @@ void RenderPath3D::Render() const
 
 		if (getVolumetricCloudsEnabled())
 		{
+			auto range = wiProfiler::BeginRangeGPU("Volumetric Clouds", cmd);
 			wiRenderer::Postprocess_VolumetricClouds(
 				volumetriccloudResources,
 				rtLinearDepth,
 				depthBuffer_Copy,
 				cmd
 			);
+			wiProfiler::EndRange(range);
 		}
 
 		});
@@ -1326,8 +1341,8 @@ void RenderPath3D::RenderTransparents(CommandList cmd) const
 	GPUParticles::gpup_draw( wiScene::GetCamera(), cmd );
 #endif
 
-	// though wiProfiler::EndRange(range); seems to be missing!
-
+	wiProfiler::EndRange(range);
+	
 	if (getVolumeLightsEnabled() && visibility_main.IsRequestedVolumetricLights())
 	{
 		device->EventBegin("Contribute Volumetric Lights", cmd);

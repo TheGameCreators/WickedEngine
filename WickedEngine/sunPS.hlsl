@@ -4,11 +4,12 @@
 
 float4 main(float4 pos : SV_POSITION, float2 clipspace : TEXCOORD) : SV_TARGET
 {
-	float4 unprojected = mul(g_xCamera_InvVP, float4(clipspace, 0.0f, 1.0f));
+	float4 unprojected = mul(g_xCamera_InvP, float4(clipspace, 1.0f, 1.0f));
 	unprojected.xyz /= unprojected.w;
 
-	const float3 origin = g_xCamera_CamPos;
-	const float3 direction = normalize(unprojected.xyz - origin);
+	float3x3 InvView3 = (float3x3) g_xCamera_InvV;
+	float3 direction = mul( InvView3, unprojected.xyz );
+	direction = normalize( direction );
 
-	return float4(GetDynamicSkyColor(direction, true, true, true), 1);
+	return float4(GetDynamicSkyColor(direction, true, false, true), 1);
 }

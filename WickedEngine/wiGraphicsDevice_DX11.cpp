@@ -3346,7 +3346,7 @@ void GraphicsDevice_DX11::UpdateTexture(const Texture* tex, uint32_t mipLevel, c
 
 	ID3D11DeviceContext* context = immediateContext.Get();
 	if ( cmd >= 0 && cmd < COMMANDLIST_COUNT ) context = deviceContexts[cmd].Get(); 
-	context->UpdateSubresource( d3dTex, 0, NULL, data, dataRowStride, 0 ); 
+	context->UpdateSubresource( d3dTex, mipLevel, NULL, data, dataRowStride, 0 ); 
 }
 
 void GraphicsDevice_DX11::GenerateMipmaps(Texture* tex, CommandList cmd)

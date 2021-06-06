@@ -13000,13 +13000,23 @@ RAY GetPickRay(long cursorX, long cursorY, const CameraComponent& camera)
 {
 	float screenW = device->GetScreenWidth();
 	float screenH = device->GetScreenHeight();
-
+	
+#ifdef GGREDUCED
+	XMVECTOR lineStart = XMLoadFloat3( &camera.Eye );
+	XMMATRIX InvVP = camera.GetInvViewProjection();
+	float x = (cursorX / screenW) * 2 - 1;
+	float y = (cursorY / screenH) * 2 - 1;
+	XMVECTOR lineEnd = XMVectorSet( x, -y, 1, 1);
+	lineEnd = XMVector4Transform( lineEnd, InvVP );
+	XMVECTOR rayDirection = XMVector3Normalize(XMVectorSubtract(lineEnd, lineStart));
+#else
 	XMMATRIX V = camera.GetView();
 	XMMATRIX P = camera.GetProjection();
 	XMMATRIX W = XMMatrixIdentity();
 	XMVECTOR lineStart = XMVector3Unproject(XMVectorSet((float)cursorX, (float)cursorY, 1, 1), 0, 0, screenW, screenH, 0.0f, 1.0f, P, V, W);
 	XMVECTOR lineEnd = XMVector3Unproject(XMVectorSet((float)cursorX, (float)cursorY, 0, 1), 0, 0, screenW, screenH, 0.0f, 1.0f, P, V, W);
 	XMVECTOR rayDirection = XMVector3Normalize(XMVectorSubtract(lineEnd, lineStart));
+#endif
 	return RAY(lineStart, rayDirection);
 }
 
