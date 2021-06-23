@@ -13006,8 +13006,10 @@ RAY GetPickRay(long cursorX, long cursorY, const CameraComponent& camera)
 	XMMATRIX InvVP = camera.GetInvViewProjection();
 	float x = (cursorX / screenW) * 2 - 1;
 	float y = (cursorY / screenH) * 2 - 1;
-	XMVECTOR lineEnd = XMVectorSet( x, -y, 1, 1);
+	XMVECTOR lineEnd = XMVectorSet( x, -y, 1, 1 );
 	lineEnd = XMVector4Transform( lineEnd, InvVP );
+	XMVECTOR W = XMVectorSplatW( lineEnd );
+    lineEnd = XMVectorDivide( lineEnd, W );
 	XMVECTOR rayDirection = XMVector3Normalize(XMVectorSubtract(lineEnd, lineStart));
 #else
 	XMMATRIX V = camera.GetView();
