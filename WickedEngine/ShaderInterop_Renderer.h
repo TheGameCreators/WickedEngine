@@ -335,10 +335,14 @@ CBUFFER(FrameCB, CBSLOT_RENDERER_FRAME)
 	float3		g_xFrame_WorldBoundsExtents_rcp;	// world enclosing AABB 1.0f / abs(max - min)
 	uint		g_xFrame_TemporalAASampleRotation;
 
+	float		g_xFrame_ShadowRes2D;
+	float		g_xFrame_ShadowResCube;
 	float		g_xFrame_ShadowKernel2D;
 	float		g_xFrame_ShadowKernelCube;
+
 	uint		g_xFrame_RaytracedShadowsSampleCount;
-	float		g_xFrame_padding0;
+	uint		g_xFrame_DirectionalLightIndex;
+	float2		g_xFrame_padding0;
 };
 
 CBUFFER(CameraCB, CBSLOT_RENDERER_CAMERA)

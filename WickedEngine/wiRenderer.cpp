@@ -35,7 +35,14 @@
 
 #ifdef GGREDUCED
 //PE: Sorry LMFIX need Wicked function.
-float fWickedCallShadowFarPlane = 1200.0f;
+float fWickedCallShadowFarPlane = 300000.0f;
+
+namespace GGTerrain {
+	extern "C" void GGTerrain_Draw_ShadowMap( wiGraphics::CommandList cmd );
+	extern "C" void __GGTerrain_Draw_ShadowMap_EMPTY( wiGraphics::CommandList cmd ) {}
+	// use GGTerrain_Draw_ShadowMap() if it is defined, otherwise use __GGTerrain_Draw_ShadowMap_EMPTY()
+	#pragma comment(linker, "/alternatename:GGTerrain_Draw_ShadowMap=__GGTerrain_Draw_ShadowMap_EMPTY")
+}
 #endif
 
 using namespace std;
@@ -2455,7 +2462,12 @@ void ClearWorld(Scene& scene)
 	pendingBottomLevelBuilds.clear();
 }
 
-static const uint32_t CASCADE_COUNT = 3;
+#ifdef GGREDUCED
+	static const uint32_t CASCADE_COUNT = 5;
+#else
+	static const uint32_t CASCADE_COUNT = 3;
+#endif
+
 // Don't store this structure on heap!
 struct SHCAM
 {
@@ -2511,15 +2523,18 @@ inline void CreateDirLightShadowCams(const LightComponent& light, CameraComponen
 	const float referenceSplitClamp = std::min(1.0f, referenceFarPlane / farPlane); // if far plane is greater than reference, do not increase cascade sizes further
 	const float splits[CASCADE_COUNT + 1] = {
 #ifdef GGREDUCED
-	referenceSplitClamp * 0.0f,		// near plane
-		referenceSplitClamp * 0.025f,	// near-mid split
-		referenceSplitClamp * 0.15f,	// mid-far split
-		referenceSplitClamp * 1.0f,		// far plane
+		// assumes a camera range of 300,000
+	    referenceSplitClamp * 0.0f,    // near plane
+		referenceSplitClamp * 0.0004f, // near-mid1 split
+		referenceSplitClamp * 0.0025f, // mid1-mid2 split
+		referenceSplitClamp * 0.015f,  // mid2-mid3 split
+		referenceSplitClamp * 0.1f,    // mid3-far split
+		referenceSplitClamp * 1.0f,	   // far plane
 #else
-	referenceSplitClamp * 0.0f,		// near plane
-		referenceSplitClamp * 0.01f,	// near-mid split
-		referenceSplitClamp * 0.1f,		// mid-far split
-		referenceSplitClamp * 1.0f,		// far plane
+	    referenceSplitClamp * 0.0f,	  // near plane
+		referenceSplitClamp * 0.01f,  // near-mid split
+		referenceSplitClamp * 0.1f,	  // mid-far split
+		referenceSplitClamp * 1.0f,	  // far plane
 #endif
 	};
 
@@ -3679,6 +3694,26 @@ void UpdatePerFrameData(
 	frameCB.g_xFrame_ForceFieldArrayOffset = frameCB.g_xFrame_LightArrayOffset + frameCB.g_xFrame_LightArrayCount;
 	frameCB.g_xFrame_ForceFieldArrayCount = (uint)vis.scene->forces.GetCount();
 
+#ifdef GGREDUCED
+	frameCB.g_xFrame_DirectionalLightIndex = -1;
+	uint32_t directionalLightIndex = frameCB.g_xFrame_LightArrayOffset;
+	for (auto visibleLight : vis.visibleLights)
+	{
+		uint16_t lightIndex = visibleLight.index;
+		const LightComponent& light = vis.scene->lights[lightIndex];
+
+		if( light.IsCastingShadow() && !light.IsStatic() )
+		{
+			if ( light.GetType() == LightComponent::DIRECTIONAL )
+			{
+				frameCB.g_xFrame_DirectionalLightIndex = directionalLightIndex;
+				break;
+			}
+		}
+		directionalLightIndex++;
+	}
+#endif
+
 	frameCB.g_xFrame_GlobalEnvProbeIndex = 0;
 	frameCB.g_xFrame_EnvProbeMipCount = 0;
 	frameCB.g_xFrame_EnvProbeMipCount_rcp = 1.0f;
@@ -3725,6 +3760,8 @@ void UpdatePerFrameData(
 		}
 		frameCB.g_xFrame_TemporalAASampleRotation = (x & 0x000000FF) | ((y & 0x000000FF) << 8);
 	}
+	frameCB.g_xFrame_ShadowRes2D = (float) SHADOWRES_2D;
+	frameCB.g_xFrame_ShadowResCube = (float) SHADOWRES_CUBE;
 	frameCB.g_xFrame_ShadowKernel2D = 1.0f / SHADOWRES_2D;
 	frameCB.g_xFrame_ShadowKernelCube = 1.0f / SHADOWRES_CUBE;
 	frameCB.g_xFrame_RaytracedShadowsSampleCount = raytracedShadowsSampleCount;
@@ -4003,9 +4040,16 @@ void UpdateRenderData(
 				{
 					std::array<SHCAM, CASCADE_COUNT> shcams;
 					CreateDirLightShadowCams(light, *vis.camera, shcams);
+#ifdef GGREDUCED
+					for( uint32_t i = 0; i < CASCADE_COUNT; i++ )
+					{
+						matrixArray[matrixCounter++] = shcams[i].VP;
+					}
+#else
 					matrixArray[matrixCounter++] = shcams[0].VP;
 					matrixArray[matrixCounter++] = shcams[1].VP;
 					matrixArray[matrixCounter++] = shcams[2].VP;
+#endif
 				}
 			}
 			break;
@@ -4866,7 +4910,7 @@ void SetShadowProps2D(int resolution, int count)
 		desc.MiscFlags = 0;
 
 		desc.BindFlags = BIND_DEPTH_STENCIL | BIND_SHADER_RESOURCE;
-		desc.Format = FORMAT_R16_TYPELESS;
+		desc.Format = FORMAT_R32_TYPELESS;
 		desc.layout = IMAGE_LAYOUT_SHADER_RESOURCE;
 		device->CreateTexture(&desc, nullptr, &shadowMapArray_2D);
 
@@ -4944,7 +4988,7 @@ void SetShadowPropsCube(int resolution, int count)
 		desc.MiscFlags = RESOURCE_MISC_TEXTURECUBE;
 
 		desc.BindFlags = BIND_DEPTH_STENCIL | BIND_SHADER_RESOURCE;
-		desc.Format = FORMAT_R16_TYPELESS;
+		desc.Format = FORMAT_R32_TYPELESS;
 		desc.layout = IMAGE_LAYOUT_SHADER_RESOURCE;
 		device->CreateTexture(&desc, nullptr, &shadowMapArray_Cube);
 
@@ -5084,6 +5128,36 @@ void DrawShadowmaps(
 							}
 						}
 					}
+#ifdef GGREDUCED
+					CameraCB cb;
+					XMStoreFloat4x4(&cb.g_xCamera_VP, shcams[cascade].VP);
+					device->UpdateBuffer(&constantBuffers[CBTYPE_CAMERA], &cb, cmd);
+
+					Viewport vp;
+					vp.TopLeftX = 0;
+					vp.TopLeftY = 0;
+					vp.Width = (float)SHADOWRES_2D;
+					vp.Height = (float)SHADOWRES_2D;
+					vp.MinDepth = 0.0f;
+					vp.MaxDepth = 1.0f;
+					device->BindViewports(1, &vp, cmd);
+
+					device->RenderPassBegin(&renderpasses_shadow2D[slice + cascade], cmd);
+
+					GGTerrain::GGTerrain_Draw_ShadowMap( cmd );
+
+					if (!renderQueue.empty())
+					{
+						RenderMeshes(vis, renderQueue, RENDERPASS_SHADOW, RENDERTYPE_OPAQUE, cmd);
+						if (GetTransparentShadowsEnabled() && transparentShadowsRequested)
+						{
+							RenderMeshes(vis, renderQueue, RENDERPASS_SHADOW, RENDERTYPE_TRANSPARENT | RENDERTYPE_WATER, cmd);
+						}
+						GetRenderFrameAllocator(cmd).free(sizeof(RenderBatch) * renderQueue.batchCount);
+					}
+
+					device->RenderPassEnd(cmd);
+#else
 					if (!renderQueue.empty())
 					{
 						CameraCB cb;
@@ -5109,7 +5183,7 @@ void DrawShadowmaps(
 
 						GetRenderFrameAllocator(cmd).free(sizeof(RenderBatch) * renderQueue.batchCount);
 					}
-
+#endif
 				}
 			}
 			break;

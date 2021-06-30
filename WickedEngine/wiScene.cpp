@@ -1239,10 +1239,10 @@ namespace wiScene
 			Projection.m[2][1] = jitter.y;
 #ifdef GGREDUCED
 	// can use infinite far plane when using reversed float depth buffer
-	#define INFINITE_FAR_PLANE
+	//#define INFINITE_FAR_PLANE
 	
 	#ifdef INFINITE_FAR_PLANE
-			zFarP = 10000000;
+			zFarP = 1000000;
 			Projection.m[2][2] = 0;
 			Projection.m[3][2] = zNearP;
 	#endif
@@ -1270,7 +1270,7 @@ namespace wiScene
 		InvP.m[3][1] = -Projection.m[2][1] / Projection.m[1][1];
 		InvP.m[3][2] = zNearP;
 		InvP.m[2][3] = 1;
-		InvP.m[3][3] = 0.000005f; // should be 0 but don't want infinities, value carefully chosen to avoid shadow artifacts
+		InvP.m[3][3] = 0.000005f; // should be 0 but don't want infinities
 		XMMATRIX _InvP = XMLoadFloat4x4(&InvP);
 	#else
 		XMMATRIX _InvP = XMMatrixInverse(nullptr, _P);

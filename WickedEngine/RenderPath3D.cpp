@@ -662,18 +662,20 @@ void RenderPath3D::Render() const
 		vp.Height = (float)depthBuffer_Main.GetDesc().Height;
 		device->BindViewports(1, &vp, cmd);
 
+		auto range = wiProfiler::BeginRangeGPU("Z-Prepass - Scene", cmd);
+		wiRenderer::DrawScene(visibility_main, RENDERPASS_PREPASS, cmd, drawscene_flags);
+		wiProfiler::EndRange(range);
+
 #ifdef GGREDUCED
-		auto range1 = wiProfiler::BeginRangeGPU("Terrain-Prepass", cmd);
+		range = wiProfiler::BeginRangeGPU("Z-Prepass - Terrain", cmd);
 		GGTerrain::GGTerrain_Draw_Prepass( cmd );
-		wiProfiler::EndRange(range1);
+		wiProfiler::EndRange(range);
 #endif
 
-		auto range = wiProfiler::BeginRangeGPU("Z-Prepass", cmd);
-
-		wiRenderer::DrawScene(visibility_main, RENDERPASS_PREPASS, cmd, drawscene_flags);
+		range = wiProfiler::BeginRangeGPU("Z-Prepass - Sky Velocity", cmd);
 		wiRenderer::DrawSkyVelocity(cmd);
-
 		wiProfiler::EndRange(range);
+		
 		device->EventEnd(cmd);
 
 		wiRenderer::OcclusionCulling_Render(*camera, visibility_main, cmd);
@@ -919,13 +921,7 @@ void RenderPath3D::Render() const
 		vp.Height = (float)depthBuffer_Main.GetDesc().Height;
 		device->BindViewports(1, &vp, cmd);
 
-#ifdef GGREDUCED
-		auto range1 = wiProfiler::BeginRangeGPU("Terrain", cmd);
-		GGTerrain::GGTerrain_Draw( cmd );
-		wiProfiler::EndRange(range1);
-#endif
-
-		auto range = wiProfiler::BeginRangeGPU("Opaque Scene", cmd);
+		auto range = wiProfiler::BeginRangeGPU("Opaque - Scene", cmd);
 
 		if (wiRenderer::GetRaytracedShadowsEnabled() || wiRenderer::GetScreenSpaceShadowsEnabled())
 		{
@@ -954,9 +950,18 @@ void RenderPath3D::Render() const
 #endif
 		device->BindResource(PS, getSSREnabled() || getRaytracedReflectionEnabled() ? &rtSSR : wiTextureHelper::getTransparent(), TEXSLOT_RENDERPATH_SSR, cmd);
 		wiRenderer::DrawScene(visibility_main, RENDERPASS_MAIN, cmd, drawscene_flags);
-		wiRenderer::DrawSky(*scene, cmd);
 
 		wiProfiler::EndRange(range); // Opaque Scene
+
+#ifdef GGREDUCED
+		range = wiProfiler::BeginRangeGPU("Opaque - Terrain", cmd);
+		GGTerrain::GGTerrain_Draw( cmd );
+		wiProfiler::EndRange(range);
+#endif
+
+		range = wiProfiler::BeginRangeGPU("Opaque - Sky", cmd);
+		wiRenderer::DrawSky(*scene, cmd);
+		wiProfiler::EndRange(range);
 
 		RenderOutline(cmd);
 
