@@ -14,15 +14,18 @@ using namespace wiGraphics;
 
 #ifdef GGREDUCED
 namespace GGTerrain {
-	extern "C" void GGTerrain_Draw( wiGraphics::CommandList cmd );
-	extern "C" void __GGTerrain_Draw_EMPTY( wiGraphics::CommandList cmd ) {}
+	extern "C" void GGTerrain_Draw( Frustum* frustum, wiGraphics::CommandList cmd );
+	extern "C" void __GGTerrain_Draw_EMPTY( Frustum* frustum, wiGraphics::CommandList cmd ) {}
 	// use GGTerrain_Draw() if it is defined, otherwise use __GGTerrain_Draw_EMPTY()
 	#pragma comment(linker, "/alternatename:GGTerrain_Draw=__GGTerrain_Draw_EMPTY")
 
-	extern "C" void GGTerrain_Draw_Prepass( wiGraphics::CommandList cmd );
-	extern "C" void __GGTerrain_Draw_Prepass_EMPTY( wiGraphics::CommandList cmd ) {}
-	// use GGTerrain_Draw_Prepass() if it is defined, otherwise use __GGTerrain_Draw_Prepass_EMPTY()
+	extern "C" void GGTerrain_Draw_Prepass( Frustum* frustum, wiGraphics::CommandList cmd );
+	extern "C" void __GGTerrain_Draw_Prepass_EMPTY( Frustum* frustum, wiGraphics::CommandList cmd ) {}
 	#pragma comment(linker, "/alternatename:GGTerrain_Draw_Prepass=__GGTerrain_Draw_Prepass_EMPTY")
+
+	extern "C" void GGTerrain_VirtualTexReadBack( Texture tex, uint32_t sampleCount, wiGraphics::CommandList cmd );
+	extern "C" void __GGTerrain_VirtualTexReadBack_EMPTY( Frustum* frustum, wiGraphics::CommandList cmd ) {}
+	#pragma comment(linker, "/alternatename:GGTerrain_VirtualTexReadBack=__GGTerrain_VirtualTexReadBack_EMPTY")
 }
 namespace GPUParticles
 {
@@ -62,6 +65,12 @@ void RenderPath3D::ResizeBuffers()
 		desc.Format = FORMAT_R16G16_FLOAT;
 		device->CreateTexture(&desc, nullptr, &rtGbuffer[GBUFFER_VELOCITY]);
 		device->SetName(&rtGbuffer[GBUFFER_VELOCITY], "rtGbuffer[GBUFFER_VELOCITY]");
+
+#ifdef GGREDUCED
+		desc.Format = FORMAT_R32_UINT;
+		device->CreateTexture(&desc, nullptr, &rtVirtualTextureReadBack);
+		device->SetName(&rtVirtualTextureReadBack, "rtVirtualTextureReadBack");
+#endif
 
 		if (getMSAASampleCount() > 1)
 		{
@@ -383,6 +392,7 @@ void RenderPath3D::ResizeBuffers()
 		{
 			desc.attachments.push_back(RenderPassAttachment::Resolve(GetGbuffer_Read(GBUFFER_VELOCITY)));
 		}
+		desc.attachments.push_back(RenderPassAttachment::RenderTarget(&rtVirtualTextureReadBack, RenderPassAttachment::LOADOP_CLEAR));
 		device->CreateRenderPass(&desc, &renderpass_depthprepass);
 
 		desc.attachments.clear();
@@ -668,7 +678,7 @@ void RenderPath3D::Render() const
 
 #ifdef GGREDUCED
 		range = wiProfiler::BeginRangeGPU("Z-Prepass - Terrain", cmd);
-		GGTerrain::GGTerrain_Draw_Prepass( cmd );
+		GGTerrain::GGTerrain_Draw_Prepass( &camera->frustum, cmd );
 		wiProfiler::EndRange(range);
 #endif
 
@@ -681,6 +691,8 @@ void RenderPath3D::Render() const
 		wiRenderer::OcclusionCulling_Render(*camera, visibility_main, cmd);
 
 		device->RenderPassEnd(cmd);
+
+		GGTerrain::GGTerrain_VirtualTexReadBack( rtVirtualTextureReadBack, getMSAASampleCount(), cmd );
 
 		// Create the top mip of depth pyramid from main depth buffer:
 		if (getMSAASampleCount() > 1)
@@ -955,7 +967,7 @@ void RenderPath3D::Render() const
 
 #ifdef GGREDUCED
 		range = wiProfiler::BeginRangeGPU("Opaque - Terrain", cmd);
-		GGTerrain::GGTerrain_Draw( cmd );
+		GGTerrain::GGTerrain_Draw( &camera->frustum, cmd );
 		wiProfiler::EndRange(range);
 #endif
 

@@ -992,6 +992,11 @@ PixelInput main(VertexInput input)
 //	WATER				-	include specialized water shader code
 //	TERRAIN				-	include specialized terrain material blending code
 
+struct OutputPrepass
+	{
+		float4 velocity : SV_TARGET0;
+		uint   readback : SV_TARGET1;  // virtual texture read back
+	};
 
 #ifdef DISABLE_ALPHATEST
 [earlydepthstencil]
@@ -999,12 +1004,15 @@ PixelInput main(VertexInput input)
 
 
 // entry point:
-#ifdef OUTPUT_GBUFFER
-GBuffer main(PixelInput input)
+#ifdef PREPASS
+	OutputPrepass main(PixelInput input)
 #else
-float4 main(PixelInput input) : SV_TARGET
-#endif // OUTPUT_GBUFFER
-
+  #ifdef OUTPUT_GBUFFER
+	GBuffer main(PixelInput input)
+  #else
+	float4 main(PixelInput input) : SV_TARGET
+  #endif // OUTPUT_GBUFFER
+#endif // PREPASS
 
 // Pixel shader base:
 {
@@ -1641,7 +1649,10 @@ float4 main(PixelInput input) : SV_TARGET
 
 	// end point:
 #ifdef PREPASS
-	return float4(velocity, 0, 0); /*FORMAT_R16G16_FLOAT*/
+	OutputPrepass output;
+	output.velocity = float4(velocity, 0, 0); /*FORMAT_R16G16_FLOAT*/
+	output.readback = 0;
+	return output;
 #else
 #ifdef OUTPUT_GBUFFER
 	//#ifdef OBJECTSHADER_USE_TANGENT

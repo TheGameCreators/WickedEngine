@@ -38,8 +38,8 @@
 float fWickedCallShadowFarPlane = 300000.0f;
 
 namespace GGTerrain {
-	extern "C" void GGTerrain_Draw_ShadowMap( wiGraphics::CommandList cmd );
-	extern "C" void __GGTerrain_Draw_ShadowMap_EMPTY( wiGraphics::CommandList cmd ) {}
+	extern "C" void GGTerrain_Draw_ShadowMap( Frustum* frustum, wiGraphics::CommandList cmd );
+	extern "C" void __GGTerrain_Draw_ShadowMap_EMPTY( Frustum* frustum, wiGraphics::CommandList cmd ) {}
 	// use GGTerrain_Draw_ShadowMap() if it is defined, otherwise use __GGTerrain_Draw_ShadowMap_EMPTY()
 	#pragma comment(linker, "/alternatename:GGTerrain_Draw_ShadowMap=__GGTerrain_Draw_ShadowMap_EMPTY")
 }
@@ -5144,7 +5144,9 @@ void DrawShadowmaps(
 
 					device->RenderPassBegin(&renderpasses_shadow2D[slice + cascade], cmd);
 
-					GGTerrain::GGTerrain_Draw_ShadowMap( cmd );
+					auto range2 = wiProfiler::BeginRangeGPU("Shadow Rendering - Terrain", cmd);
+					GGTerrain::GGTerrain_Draw_ShadowMap( &shcams[cascade].frustum, cmd );
+					wiProfiler::EndRange( range2 );
 
 					if (!renderQueue.empty())
 					{
