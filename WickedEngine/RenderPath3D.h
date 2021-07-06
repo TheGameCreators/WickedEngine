@@ -84,6 +84,10 @@ public:
 	wiGraphics::Texture rtPostprocess_HDR; // ping-pong with main scene RT in HDR post-process chain
 	wiGraphics::Texture rtPostprocess_LDR[2]; // ping-pong with itself in LDR post-process chain
 
+#ifdef GGREDUCED
+	wiGraphics::Texture rtVirtualTextureReadBack;
+#endif
+
 	wiGraphics::Texture depthBuffer_Main; // used for depth-testing, can be MSAA
 	wiGraphics::Texture depthBuffer_Copy; // used for shader resource, single sample
 	wiGraphics::Texture depthBuffer_Copy1; // used for disocclusion check
