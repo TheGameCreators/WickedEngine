@@ -2267,6 +2267,7 @@ namespace wiScene
 						// use fSmoothAmount to introduce this frame smoothly into current frame
 						t = channel.fSmoothAmount;
 					}
+					/* old method
 					if (channel.iUsePreFrame == 3 || channel.iUsePreFrame == 4)
 					{
 						if (channel.path==AnimationComponent::AnimationChannel::Path::TRANSLATION)
@@ -2279,6 +2280,41 @@ namespace wiScene
 							transform.translation_local.y = fRetainYPos;
 							if ( channel.iUsePreFrame == 3 ) transform.translation_local.z = fRetainZPos;
 							if ( channel.iUsePreFrame == 4 ) transform.translation_local.x = fRetainXPos;
+							if (channel.iUsePreFrame == 4)
+							{
+								transform.translation_local.x = 0;
+								transform.translation_local.z = 0;
+							}
+						}
+					}
+					if (channel.iUsePreFrame == 3 || channel.iUsePreFrame == 4)
+					{
+						if (channel.path==AnimationComponent::AnimationChannel::Path::TRANSLATION)
+						{
+							float fRetainXPos = transform.translation_local.x;
+							float fRetainYPos = transform.translation_local.y;
+							float fRetainZPos = transform.translation_local.z;
+							XMVECTOR preframeT = channel.vPreFrameTranslation;
+							XMStoreFloat3(&transform.translation_local, preframeT);
+							transform.translation_local.y = fRetainYPos;
+							if ( channel.iUsePreFrame == 3 ) transform.translation_local.z = fRetainZPos;
+							if ( channel.iUsePreFrame == 4 ) transform.translation_local.x = fRetainXPos;
+							if (channel.iUsePreFrame == 4)
+							{
+								transform.translation_local.x = 0;
+								transform.translation_local.z = 0;
+							}
+						}
+					}
+					*/
+					if (channel.iUsePreFrame == 3 )
+					{
+						if (channel.path==AnimationComponent::AnimationChannel::Path::TRANSLATION)
+						{
+							float fRetainYPos = transform.translation_local.y;
+							XMVECTOR preframeT = channel.vPreFrameTranslation;
+							XMStoreFloat3(&transform.translation_local, preframeT);
+							transform.translation_local.y = fRetainYPos;
 						}
 					}
 #else
