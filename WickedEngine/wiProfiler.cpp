@@ -104,7 +104,7 @@ namespace wiProfiler
 
 		GraphicsDevice* device = wiRenderer::GetDevice();
 
-		// note: read the GPU Frame end range manually because it will be on a separate command list than start point:
+		// note: read the GPU Frame end range manually because it will be on a separate command list than start point: 
 		auto& gpu_range = ranges[gpu_frame];
 		gpu_range.gpuEnd[query_write] = nextQuery.fetch_add(1) % queryHeap[query_write].desc.queryCount;
 		device->QueryEnd(&queryHeap[query_write], gpu_range.gpuEnd[query_write], cmd);
