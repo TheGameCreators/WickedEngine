@@ -2204,10 +2204,11 @@ namespace wiScene
 					target_transform->SetDirty();
 
 					// additional functionality to impose other animation frames to the current frame
-					// and adjust the rotation of frames for post-animation features such as head turning
-#ifdef GGREDUCED
+					#ifdef GGREDUCED
+					// with built-in fixed animation transition speed (for now)
+					animation.amount = wiMath::Lerp(animation.amount, 1, 0.0005f);
 					float t = animation.amount;
-
+					// and adjust the rotation of frames for post-animation features such as head turning
 					if (channel.iUsePreFrame == 1)
 					{
 						// merge preframe with current frame
@@ -2267,46 +2268,6 @@ namespace wiScene
 						// use fSmoothAmount to introduce this frame smoothly into current frame
 						t = channel.fSmoothAmount;
 					}
-					/* old method
-					if (channel.iUsePreFrame == 3 || channel.iUsePreFrame == 4)
-					{
-						if (channel.path==AnimationComponent::AnimationChannel::Path::TRANSLATION)
-						{
-							float fRetainXPos = transform.translation_local.x;
-							float fRetainYPos = transform.translation_local.y;
-							float fRetainZPos = transform.translation_local.z;
-							XMVECTOR preframeT = channel.vPreFrameTranslation;
-							XMStoreFloat3(&transform.translation_local, preframeT);
-							transform.translation_local.y = fRetainYPos;
-							if ( channel.iUsePreFrame == 3 ) transform.translation_local.z = fRetainZPos;
-							if ( channel.iUsePreFrame == 4 ) transform.translation_local.x = fRetainXPos;
-							if (channel.iUsePreFrame == 4)
-							{
-								transform.translation_local.x = 0;
-								transform.translation_local.z = 0;
-							}
-						}
-					}
-					if (channel.iUsePreFrame == 3 || channel.iUsePreFrame == 4)
-					{
-						if (channel.path==AnimationComponent::AnimationChannel::Path::TRANSLATION)
-						{
-							float fRetainXPos = transform.translation_local.x;
-							float fRetainYPos = transform.translation_local.y;
-							float fRetainZPos = transform.translation_local.z;
-							XMVECTOR preframeT = channel.vPreFrameTranslation;
-							XMStoreFloat3(&transform.translation_local, preframeT);
-							transform.translation_local.y = fRetainYPos;
-							if ( channel.iUsePreFrame == 3 ) transform.translation_local.z = fRetainZPos;
-							if ( channel.iUsePreFrame == 4 ) transform.translation_local.x = fRetainXPos;
-							if (channel.iUsePreFrame == 4)
-							{
-								transform.translation_local.x = 0;
-								transform.translation_local.z = 0;
-							}
-						}
-					}
-					*/
 					if (channel.iUsePreFrame == 3 )
 					{
 						if (channel.path==AnimationComponent::AnimationChannel::Path::TRANSLATION)
@@ -2317,9 +2278,9 @@ namespace wiScene
 							transform.translation_local.y = fRetainYPos;
 						}
 					}
-#else
+					#else
 					const float t = animation.amount;
-#endif
+					#endif
 					const XMVECTOR aS = XMLoadFloat3(&target_transform->scale_local);
 					const XMVECTOR aR = XMLoadFloat4(&target_transform->rotation_local);
 					const XMVECTOR aT = XMLoadFloat3(&target_transform->translation_local);
